@@ -70,6 +70,9 @@ define([
       self.options = $.extend(true, {}, self.defaults, options);
       self.indexes = indexes;
       self.indexGroups = {};
+      self.advancedMode = false;
+
+      self.createSimplePathOperators();
 
       // create wrapper criteria and append it to DOM
       self.$wrapper = $('<div/>')
@@ -88,7 +91,7 @@ define([
       self.$index = $('<select><option></option></select>')
           .attr('placeholder', _t('Select criteria'));
 
-      // list of indexes
+      // attach indexes
       $.each(self.indexes, function(value, options) {
         if (options.enabled) {
           if (!self.indexGroups[options.group]) {
@@ -161,7 +164,9 @@ define([
         .on('change', function(e) {
           self.createValue(index);
           self.createClear();
-          self.trigger('operator-changed');
+          if( self.indexes[index].operators[e.val].widget !== 'advancedPathWidget' ) {
+            self.trigger('operator-changed');
+          }
         });
 
       if (operator === undefined) {
@@ -172,6 +177,45 @@ define([
       self.createValue(index, value);
 
       self.trigger('create-operator');
+    },
+    createSimplePathOperators: function() {
+      var self = this;
+
+      var pathIndex = self.indexes['path'];
+      var ops = pathIndex.operators;
+      //TODO: remove hardcoded values
+      var parent = 'plone.app.querystring.operation.string.parentListing';
+      var current = 'plone.app.querystring.operation.string.currentListing';
+      var advancedPath = 'plone.app.querystring.operation.string.advancedPath';
+      if( ops[advancedPath] === undefined ) {
+        ops[advancedPath] = {
+          widget: 'advancedPathWidget',
+          operation: '',
+          description: 'Manually enter a path',
+          title: 'Simple options',
+        }
+
+        ops[parent] = {
+          widget: 'StringWidget',
+          operation: '',
+          description: 'Display the contents of the current folder\'s parent',
+          title: 'Parent listing',
+          advancedMode: true
+        };
+
+        ops[current] = {
+          widget: 'StringWidget',
+          operation: '',
+          description: 'Display the contents of the current folder',
+          title: 'Current listing',
+          advancedMode: true
+        };
+        self.indexes['path'].operations.push(current);
+        self.indexes['path'].operations.push(parent);
+        self.indexes['path'].operations.push(advancedPath);
+      }else{
+          return;
+      };
     },
     createValue: function(index, value) {
       var self = this,
@@ -266,6 +310,11 @@ define([
                 .change(function() {
                   self.trigger('value-changed');
                 });
+
+      }else if (widget === 'advancedPathWidget'){
+        self.advancedMode = self.advancedMode == false ? true : false;
+        self.removeValue();
+        self.createOperator(index);
 
       } else if (widget === 'MultipleSelectionWidget') {
         self.$value = $('<select/>').prop('multiple', true)
