@@ -434,6 +434,7 @@ define([
 
       if( styles === "" || styles === undefined ) {
         //There was probably a problem during compilation
+        self.lessbuilderView.showError("There was a problem during compilation.");
         return false;
       }
 
