@@ -213,13 +213,17 @@ define([
       options = {};
     }
     self.options = $.extend({}, defaults, options);
-    self.$el = $('.' + self.className);
-    if(self.$el.length === 0){
-      self.$el = $('<div><div></div></div>');
-      self.$el.addClass(self.className).hide().appendTo('body');
-    }
+
+    self.init = function(){
+      self.$el = $('.' + self.className);
+      if(self.$el.length === 0){
+        self.$el = $('<div><div></div></div>');
+        self.$el.addClass(self.className).hide().appendTo('body');
+      }
+    };
 
     self.show = function(closable){
+      self.init();
       self.$el.show();
       var zIndex = self.options.zIndex;
       if (typeof(zIndex) === 'function') {
@@ -247,6 +251,7 @@ define([
     };
 
     self.hide = function(){
+      self.init();
       self.$el.hide();
     };
 
