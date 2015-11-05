@@ -44,10 +44,11 @@ define([
   'pat-base',
   'mockup-patterns-select2',
   'mockup-patterns-pickadate',
+  'mockup-patterns-relateditems',
   'select2',
   'translate',
   'underscore'
-], function($, Base, Select2, PickADate, undefined, _t, _) {
+], function($, Base, Select2, PickADate, RelatedItems, undefined, _t, _) {
   'use strict';
 
   var Criteria = function() { this.init.apply(this, arguments); };
@@ -64,13 +65,13 @@ define([
       classResultsName: 'querystring-criteria-results',
       classClearName: 'querystring-criteria-clear'
     },
-    init: function($el, options, indexes, index, operator, value) {
+    init: function($el, options, indexes, index, operator, value, baseUrl) {
       var self = this;
 
       self.options = $.extend(true, {}, self.defaults, options);
       self.indexes = indexes;
       self.indexGroups = {};
-
+      self.baseUrl = baseUrl;
       // create wrapper criteria and append it to DOM
       self.$wrapper = $('<div/>')
               .addClass(self.options.classWrapperName)
@@ -138,7 +139,7 @@ define([
       self.removeOperator();
       self.$operator = $('<select/>');
 
-      if (self.indexes[index]) {
+      if(self.indexes[index]) {
         _.each(self.indexes[index].operations, function(value) {
           var options = self.indexes[index].operators[value];
           $('<option/>')
@@ -267,7 +268,22 @@ define([
                 .change(function() {
                   self.trigger('value-changed');
                 });
+      } else if(widget === 'RelatedItemsWidget') {
 
+        self.$value = $('<input type="text" />')
+          .addClass(self.options.classValueName + '-' + widget)
+          .appendTo($wrapper)
+          .patternRelateditems({
+            "vocabularyUrl": self.baseUrl + "@@getVocabulary?name=plone.app.vocabularies.Catalog&field=relatedItems",
+            "folderTypes": ["Folder"],
+            "maximumSelectionSize": 1,
+            "width": "300px"
+          })
+          .change(function() {
+            self.trigger('value-changed');
+          });
+      } else if(widget === 'HiddenPathWidget') {
+        //No need for an input, everything is handled in the backend
       } else if (widget === 'MultipleSelectionWidget') {
         self.$value = $('<select/>').prop('multiple', true)
                 .addClass(self.options.classValueName + '-' + widget)
@@ -466,7 +482,6 @@ define([
 
       // initialization can be detailed if by ajax
       self.initialized = false;
-
       if (self.options.indexOptionsUrl) {
         $.ajax({
           url: self.options.indexOptionsUrl,
@@ -536,8 +551,9 @@ define([
     },
     createCriteria: function(index, operator, value) {
       var self = this,
+          baseUrl = self.options.indexOptionsUrl.replace(/(@@.*)/g, ''),
           criteria = new Criteria(self.$criteriaWrapper, self.options.criteria,
-            self.options.indexes, index, operator, value);
+            self.options.indexes, index, operator, value, baseUrl);
 
       criteria.on('remove', function(e) {
         if (self.criterias[self.criterias.length - 1] === criteria) {
