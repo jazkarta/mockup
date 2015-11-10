@@ -510,6 +510,23 @@ define([
         });
       }
 
+      if (self.$el.is('input[type="submit"]')) {
+        self.$el.on('click', function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+          self.showLoading();
+          var actionOptions = $.extend({}, self.actionOptions, {
+            displayInModal: true,
+            onSuccess: function() {
+              self.$loading.hide();
+              self.$raw = $('<div></div>');
+              self._show();
+            }
+          });
+          self.options.handleFormAction.apply(self, [self.$el, actionOptions, self.options]);
+        });
+      }
+
       self.initModal();
     },
     showLoading: function(closable) {
