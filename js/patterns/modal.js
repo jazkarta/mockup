@@ -184,6 +184,9 @@ define([
           url = $action.parents('form').attr('action');
         }
 
+        // Disable button
+        $action.prop('disabled', true);
+
         // We want to trigger the form submit event but NOT use the default
         $form.on('submit', function(e){
           e.preventDefault();
@@ -195,6 +198,7 @@ define([
           data: extraData,
           url: url,
             error: function(xhr, textStatus, errorStatus) {
+              $action.prop('disabled', false);
               if (textStatus === 'timeout' && options.onTimeout) {
                 options.onTimeout.apply(self, xhr, errorStatus);
               // on "error", "abort", and "parsererror"
