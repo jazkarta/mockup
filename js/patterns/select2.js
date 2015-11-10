@@ -148,6 +148,7 @@ define([
       if(self.options.orderable){
         self.$select2.addClass('select2-orderable');
       }
+      self.$el.on('select2-close', function() { self.$el.trigger('blur'); });
     },
     init: function() {
       var self = this;
