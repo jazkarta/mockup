@@ -54,13 +54,13 @@ define([
       searchText: 'Search',
       homeText: 'home',
       folderTypes: ['Folder'],
-      attributes: ['UID','Title', 'Type', 'path'],
+      attributes: ['UID','Title', 'Type', 'path', 'review_state'],
       dropdownCssClass: 'pat-relateditems-dropdown',
       maximumSelectionSize: -1,
       showTabs: true,
       resultTemplate: '' +
         '<div class="pat-relateditems-result pat-relateditems-type-<%= Type %> <% if (selected) { %>pat-active<% } %>">' +
-        '  <a href="#" class="pat-relateditems-result-select">' +
+        '  <a href="#" class="pat-relateditems-result-select state-<%= review_state %>">' +
         '    <span class="pat-relateditems-result-title"><%= Title %></span>' +
         '    <span class="pat-relateditems-result-path"><%= path %></span>' +
         '  </a>' +
