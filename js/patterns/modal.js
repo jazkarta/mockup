@@ -95,7 +95,7 @@ define([
         ajaxUrl: null, // string, or function($el, options) that returns a string
         modalFunction: null, // String, function name on self to call
         isForm: false,
-        timeout: 5000,
+        timeout: 15000,
         displayInModal: true,
         reloadWindowOnClose: true,
         error: '.portalMessage.error',
@@ -104,9 +104,13 @@ define([
           '  <div class="bar" style="width: 100%;"></div>' +
           '</div>',
         onSuccess: null,
-        onError: null,
+        onError: function() {
+          window.alert('An error occurred.');
+        },
         onFormError: null,
-        onTimeout: null,
+        onTimeout: function() {
+          window.alert('Timed out waiting for server.');
+        },
         redirectOnResponse: false,
         redirectToUrl: function($action, response, options) {
             var $base = $(/<base.*?(\/>|<\/base>)/im.exec(response)[0]);
