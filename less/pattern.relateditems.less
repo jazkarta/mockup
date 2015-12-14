@@ -1,6 +1,6 @@
-@import "../bower_components/bootstrap/less/variables.less";
-@import "../bower_components/bootstrap/less/mixins.less";
-@import "../bower_components/font-awesome/less/mixins.less";
+@import "~bootstrap/less/variables.less";
+@import "~bootstrap/less/mixins.less";
+// @import "~../bower_components/font-awesome/less/mixins.less";
 @import "pattern.select2.less";
 
 .pat-relateditems-dropdown {
@@ -91,7 +91,7 @@
     padding-left: 20px;
 
     &:after {
-      .icon(@circle-blank);
+      // .icon(@circle-blank);
       position: absolute;
       left: 0;
       font-size: 14px;
@@ -104,13 +104,13 @@
 
   }
 
-  &.pat-active {
-    .pat-relateditems-result-select {
-      &:after {
-        .icon(@circle);
-      }
-    }
-  }
+  // &.pat-active {
+  //   .pat-relateditems-result-select {
+  //     &:after {
+  //       .icon(@circle);
+  //     }
+  //   }
+  // }
 
   .pat-relateditems-buttons {
     position: absolute;
@@ -124,9 +124,9 @@
       display: block;
       height: 36px;
       line-height: 36px;
-      &:after {
-        .icon(@chevron-right);
-      }
+      // &:after {
+      //   .icon(@chevron-right);
+      // }
     }
   }
 
