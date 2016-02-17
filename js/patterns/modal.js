@@ -186,6 +186,7 @@ define([
 
         // Disable button
         $action.prop('disabled', true);
+        if (self.$activeButton) self.$activeButton.prop('disabled', true);
 
         // We want to trigger the form submit event but NOT use the default
         $form.on('submit', function(e){
@@ -199,6 +200,7 @@ define([
           url: url,
             error: function(xhr, textStatus, errorStatus) {
               $action.prop('disabled', false);
+              if (self.$activeButton) self.$activeButton.prop('disabled', false);
               if (textStatus === 'timeout' && options.onTimeout) {
                 options.onTimeout.apply(self, xhr, errorStatus);
               // on "error", "abort", and "parsererror"
@@ -354,6 +356,7 @@ define([
             .off('click').on('click', function(e) {
               e.stopPropagation();
               e.preventDefault();
+              self.$activeButton = $(this);
               $button.trigger('click');
             });
           $button.hide();
