@@ -43,7 +43,7 @@ define([
     defaults: {
       width: "",
       height: "",
-      margin: function() { return 20; }, // can be int or function that returns an int -- int is a pixel value
+      margin: function() { return 10; }, // can be int or function that returns an int -- int is a pixel value
       position: "center middle", // format: "<horizontal> <vertical>" -- allowed values: top, bottom, left, right, center, middle
       triggers: [],
       backdrop: "body", // Element to initiate the Backdrop on.
