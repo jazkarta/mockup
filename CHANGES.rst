@@ -24,6 +24,79 @@ New:
 - add body class for active popover
   [vangheem]
 
+Fixes:
+
+- Make ``pat-tooltip`` useable by it's own by including the necessary less files and reuse that one in other patterns.
+  Allow configuration of ``placement`` parameter.
+  [thet]
+
+- Update outdated links in Learn.md
+  [staeff]
+
+- Use github fork of grunt-sed and remove unused task.
+  [gforcada]
+
+- Fixes issue when HTML escaping select2 values. Now removing HTML completely and leave the input unescaped.
+  [petschki]
+
+
+2.3.0 (2016-08-19)
+------------------
+
+Incompatibilities:
+
+- Remove support for node version < ``0.11`` and update travis dependencies.
+  [thet]
+
+- Needs RequireJS configuration for ``mockup-patterns-relateditems-url``.
+  [thet]
+
+
+New:
+
+- Related items pattern: Result button style allow for more room for scrollbar, and have subltle color change on hover to deliniate user-expected behavior of browsing vs. selecting item.
+  [seanupton]
+
+ - Related items pattern: Related Items pattern: content icon cross-compatibility with Plone 5.x and 4.x (via plone.app.widgets 1.x); in Plone 5 getIcon returned from brain is a boolean, in Plone 4, it is a string -- use this to show content icons in Plone 5 as previous, but also show image scale in Plone 4, but only for images.  This is the most reasonable solution to avoid requesting many broken image scales (404) in Plone 4.
+  [seanupton]
+
+- Structure pattern refactorings:
+
+    - Allow definition of action menu items not only as dropdowns but also as buttons.
+
+    - Add ``openItem`` and ``editItem`` actions as buttons and remove the open icon from the title column.
+
+    - Open ``openItem`` links according to ``typeToViewAction`` instead of default with the ``/view`` postfix.
+
+    - Open ``editItem`` under ``/@@edit`` instead ``/edit``.
+
+    - Remove JS event handlers for externally opening simple URLs and use the href attribute instead.
+
+    - Add ``iconCSS`` option for action menus items to add icons.
+
+    - Add ``modal`` option for action menus items to allow links open in a modal.
+
+    - Add ``iconSize`` option to set the icon size if a item has an image.
+
+    - Use icons for all actionmenu entries.
+
+    - Use the tooltip pattern for all actionmenu buttons.
+
+    - Use pat-moment also for ``start``, ``end`` and ``last_comment_date`` columns.
+
+    - For columns with date fields, show an empty column if the date value is 'None'.
+
+    - Remove the checkbox and the actionmenu from the breadcrumbs bar for the current active folder to simplify the structure pattern.
+      The actionmenu contained redundant actions (cut, copy, paste) and selecting the current folder is possible one level up.
+
+    - Don't show empty alerts with ``alert-warning`` CSS class.
+      Show them transparent but in the same height as if they were not empty.
+      Align HTML structue with bootstrap ones and use ``<strong>`` for alert labels.
+
+    - Fix rearrange button
+
+  [thet]
+
 - Be able to set structure status from server with object of { text: '', label: '', type: 'warning'}
   so you can customize the status message from ajax handlers.
   [vangheem]

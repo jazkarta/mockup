@@ -274,7 +274,47 @@ define([
     return win;
   };
 
+  var parseBodyTag = function(txt) {
+    return $((/<body[^>]*>((.|[\n\r])*)<\/body>/im).exec(txt)[0]
+      .replace('<body', '<div').replace('</body>', '</div>')).eq(0).html();
+  };
+
+  var featureSupport = {
+    /* Well tested feature support for things we use in mockup.
+     * All gathered from: http://diveintohtml5.info/everything.html
+     * Alternative to using some form of modernizr.
+     */
+    dragAndDrop: function() {
+      return 'draggable' in document.createElement('span');
+    },
+    fileApi: function() {
+      return typeof FileReader != 'undefined'; // jshint ignore:line
+    },
+    history: function() {
+      return !!(window.history && window.history.pushState);
+    }
+  };
+
+  var bool = function(val) {
+    if (typeof val === 'string') {
+      val = $.trim(val).toLowerCase();
+    }
+    return ['true', true, 1].indexOf(val) !== -1;
+  };
+
+  var escapeHTML = function(val) {
+    return $('<div/>').text(val).html();
+  };
+
+  var removeHTML = function(val) {
+    return val.replace(/<[^>]+>/ig, "");
+  };
+
   return {
+    bool: bool,
+    escapeHTML: escapeHTML,
+    removeHTML: removeHTML,
+    featureSupport: featureSupport,
     generateId: generateId,
     parseBodyTag: function(txt) {
       return $((/<body[^>]*>((.|[\n\r])*)<\/body>/im).exec(txt)[0]
