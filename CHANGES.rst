@@ -12,6 +12,14 @@ Incompatibilities:
 New:
 
 - Fix urls in modals not opening in new window
+- PickADate pattern: Add option to automatically set the time when changing the date.
+  It defaults to set the time to the current time.
+  [thet]
+
+- Change default sort option in livesearch pattern.
+  [rodfersou]
+
+- Show expired label in folder contents for expired attributes
   [vangheem]
 
 - Update safe bower.json dependencies except backbone which tests would fail.
