@@ -1,32 +1,19 @@
 <div>
   <div class="linkModal">
     <h1><%- insertHeading %></h1>
-    <% if(upload){ %>
-    <p class="info">Specify the object to link to. It can be on this site already ("Internal"), an object you upload ("Upload"), from an external site ("External"), an email address ("Email"), or an anchor on this page ("Anchor").</p>
-    <% } %>
+    <p class="info">
+      Specify the object for the link using one of these tabs.<br />
+      <strong>URL:</strong> Enter a mountaineers.org URL (e.g. https://www.mountaineers.org/volunteers) or a URL for an external website (e.g. https://plone.org/).<br />
+      <strong>Email:</strong> Enter an email address and optionally a subject.<br />
+      <strong>Browse:</strong> Navigate to/search for an item on this site.<br />
+      <strong>Anchor (advanced):</strong> Choose an anchor from the list.
+    </p>
 
     <div class="linkTypes pat-autotoc autotabs"
          data-pat-autotoc="section:fieldset;levels:legend;IDPrefix:tinymce-autotoc-">
 
-      <fieldset class="linkType internal" data-linkType="internal">
-        <legend id="tinylink-internal">Internal</legend>
-        <div>
-          <div class="form-group main">
-            <!-- this gives the name to the "linkType" -->
-            <input type="text" name="internal" />
-          </div>
-        </div>
-      </fieldset>
-
-      <% if(upload){ %>
-      <fieldset class="linkType upload" data-linkType="upload">
-        <legend id="tinylink-upload">Upload</legend>
-        <div class="uploadify-me"></div>
-      </fieldset>
-      <% } %>
-
       <fieldset class="linkType external" data-linkType="external">
-        <legend id="tinylink-external">External</legend>
+        <legend id="tinylink-external">URL</legend>
         <div class="form-group main">
           <label for="external"><%- externalText %></label>
           <input type="text" name="external" />
@@ -43,6 +30,16 @@
           <div class="form-group">
             <label><%- subjectText %></label>
             <input type="text" name="subject" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="linkType internal" data-linkType="internal">
+        <legend id="tinylink-internal">Browse</legend>
+        <div>
+          <div class="form-group main">
+            <!-- this gives the name to the "linkType" -->
+            <input type="text" name="internal" />
           </div>
         </div>
       </fieldset>
@@ -73,6 +70,7 @@
       <div class="form-group">
         <label><%- titleText %></label>
         <input type="text" name="title" />
+        <div>Text entered here appears in a “tooltip”-style box near the link when the mouse is positioned on the link.</div>
       </div>
     </div>
 

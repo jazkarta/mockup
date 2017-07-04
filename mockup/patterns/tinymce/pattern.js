@@ -137,12 +137,12 @@ define([
         placeholder: _t('Search for item on site...')
       },
       text: {
-        insertBtn: _t('Insert'), // so this can be configurable for different languages
+        insertBtn: _t('Save'), // so this can be configurable for different languages
         cancelBtn: _t('Cancel'),
-        insertHeading: _t('Insert link'),
+        insertHeading: _t('Insert/edit link'),
         title: _t('Title'),
         internal: _t('Internal'),
-        external: _t('External URL (can be relative within this site or absolute if it starts with http:// or https://)'),
+        external: _t('URL'),
         email: _t('Email Address'),
         anchor: _t('Anchor'),
         subject: _t('Email Subject (optional)'),
@@ -166,9 +166,7 @@ define([
               'Large (768x768):large'),
       targetList: [
         {text: _t('Open in this window / frame'), value: ''},
-        {text: _t('Open in new window'), value: '_blank'},
-        {text: _t('Open in parent window / frame'), value: '_parent'},
-        {text: _t('Open in top frame (replaces all frames)'), value: '_top'}
+        {text: _t('Open in new window'), value: '_blank'}
       ],
       imageTypes: ['Image'],
       folderTypes: ['Folder', 'Plone Site'],
@@ -192,10 +190,7 @@ define([
       var self = this;
       if (self.linkModal === null) {
         var $el = $('<div/>').insertAfter(self.$el);
-        var linkTypes = ['internal', 'upload', 'external', 'email', 'anchor'];
-        if(!self.options.upload){
-          linkTypes.splice(1, 1);
-        }
+        var linkTypes = ['external', 'email', 'internal', 'anchor'];
         self.linkModal = new LinkModal($el,
           $.extend(true, {}, self.options, {
             tinypattern: self,
@@ -211,16 +206,13 @@ define([
     addImageClicked: function() {
       var self = this;
       if (self.imageModal === null) {
-        var linkTypes = ['image', 'uploadImage', 'externalImage'];
-        if(!self.options.upload){
-          linkTypes.splice(1, 1);
-        }
+        var linkTypes = ['uploadImage', 'image', 'externalImage'];
         var options = $.extend(true, {}, self.options, {
           tinypattern: self,
           linkTypes: linkTypes,
           initialLinkType: 'image',
           text: {
-            insertHeading: _t('Insert Image')
+            insertHeading: _t('Insert/edit Image')
           },
           relatedItems: {
             baseCriteria: [{

@@ -8,7 +8,14 @@
     <div class="linkTypes pat-autotoc autotabs"
          data-pat-autotoc="section:fieldset;levels:legend;IDPrefix:tinymce-autotoc-">
 
-        <% if(_.contains(linkTypes, 'image')){ %>
+      <% if(_.contains(linkTypes, 'uploadImage')){ %>
+      <fieldset class="linkType uploadImage" data-linkType="uploadImage">
+        <legend id="tinylink-uploadImage">Upload</legend>
+        <div class="uploadify-me"></div>
+      </fieldset>
+      <% } %>
+
+      <% if(_.contains(linkTypes, 'image')){ %>
       <fieldset class="linkType image" data-linkType="image">
         <legend id="tinylink-image">Internal Image</legend>
         <div class="form-inline">
@@ -27,13 +34,6 @@
             </select>
           </div>
         </div>
-      </fieldset>
-        <% } %>
-
-      <% if(_.contains(linkTypes, 'uploadImage')){ %>
-      <fieldset class="linkType uploadImage" data-linkType="uploadImage">
-        <legend id="tinylink-uploadImage">Upload</legend>
-        <div class="uploadify-me"></div>
       </fieldset>
       <% } %>
 

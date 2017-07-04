@@ -60,14 +60,16 @@ define([
       this.getEl().on('change', function(){
         // check here if we should automatically add in http:// to url
         var val = $(this).val();
-        if((new RegExp("https?\:\/\/")).test(val)){
-          // already valid url
-          return;
+        if(!(new RegExp("https?\:\/\/")).test(val)){
+          var domain = $(this).val().split('/')[0];
+          if(domain.indexOf('.') !== -1){
+            val = 'http://' + val;
+          }
         }
-        var domain = $(this).val().split('/')[0];
-        if(domain.indexOf('.') !== -1){
-          $(this).val('http://' + val);
-        }
+        // use backend to convert to resolveuid URL when link is internal
+        $.get(portal_url + '/@@make-resolveuid-url', {url: val}, function (data) {
+          $(this).val(data);
+        }.bind(this));
       });
     }
   });
