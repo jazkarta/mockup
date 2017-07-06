@@ -2,7 +2,7 @@
   <div class="linkModal">
     <h1><%- insertHeading %></h1>
     <p class="info">
-      Specify the object for the link using one of these tabs.
+      Specify the object for the link using one of these tabs.<br><br>
     </p>
 
     <div class="linkTypes pat-autotoc autotabs"
