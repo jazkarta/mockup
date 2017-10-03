@@ -2,7 +2,7 @@
   <div class="linkModal">
     <h1><%- insertHeading %></h1>
     <% if(_.contains(linkTypes, 'uploadImage')){ %>
-    <p class="info">Specify an image. It can be on this site already ("Internal Image"), an image you upload ("Upload"), or from an external site ("External Image").</p>
+    <p class="info">Specify an image. It can be on this site already ("Internal Image") or an image you upload ("Upload").</p>
     <% } %>
 
     <div class="linkTypes pat-autotoc autotabs"

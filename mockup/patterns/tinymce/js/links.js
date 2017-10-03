@@ -759,6 +759,11 @@ define([
           }else if (src) {
             self.guessImageLink(src);
           }
+          if (self.linkType !== 'externalImage') {
+            // hide external image unless it's in use
+            $('.autotoc-level-1:last', self.modal.$modal).hide();
+            $('fieldset.externalImage', self.modal.$modal).hide();
+          }
           var className = self.dom.getAttrib(self.imgElm, 'class');
           var klasses = className.split(' ');
           for (var i = 0; i < klasses.length; i = i + 1) {
