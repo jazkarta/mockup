@@ -62,10 +62,7 @@ define([
   'jquery',
   'underscore',
   'pat-base',
-  'mockup-patterns-relateditems',
-  'mockup-patterns-modal',
   'tinymce',
-  'mockup-patterns-autotoc',
   'text!mockup-patterns-tinymce-url/templates/result.xml',
   'text!mockup-patterns-tinymce-url/templates/selection.xml',
   'mockup-utils',
@@ -115,8 +112,8 @@ define([
   'tinymce-wordcount',
   'tinymce-compat3x'
 ], function($, _,
-            Base, RelatedItems, Modal, tinymce,
-            AutoTOC, ResultTemplate, SelectionTemplate,
+            Base, tinymce,
+            ResultTemplate, SelectionTemplate,
             utils, LinkModal, I18n, _t) {
   'use strict';
 
@@ -132,7 +129,7 @@ define([
       },
       relatedItems: {
         // UID attribute is required here since we're working with related items
-        attributes: ['UID', 'Title', 'Description', 'getURL', 'portal_type', 'path', 'ModificationDate', 'getIcon'],
+        attributes: ['UID', 'Title', 'portal_type', 'path','getURL', 'getIcon','is_folderish','review_state'],
         batchSize: 20,
         basePath: '/',
         vocabularyUrl: null,
@@ -376,7 +373,7 @@ define([
       self.initLanguage(function() {
         if(typeof(self.options.scales) === 'string'){
           self.options.scales = _.map(self.options.scales.split(','), function(scale){
-            var scale = scale.split(':');
+            scale = scale.split(':');
             return {
               part: scale[1],
               name: scale[1],
@@ -396,6 +393,20 @@ define([
           // copy contents from textarea to it. Then hide textarea.
           self.$el.after('<div id="' + self.tinyId + '">' + self.$el.val() + '</div>');
           self.$el.hide();
+        }
+
+        if(tinyOptions.importcss_file_filter && tinyOptions.importcss_file_filter.indexOf(',') !== -1){
+          // need a custom function to check now
+          var files = tinyOptions.importcss_file_filter.split(',');
+
+          tinyOptions.importcss_file_filter = function(value) {
+            for(var i=0; i<files.length; i++){
+              if(value.indexOf(files[i]) !== -1){
+                return true;
+              }
+            }
+            return false;
+          };
         }
 
         tinymce.init(tinyOptions);

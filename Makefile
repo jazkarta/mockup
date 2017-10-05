@@ -1,13 +1,10 @@
 GIT = git
 NPM = npm
-NODE_VERSION = $(shell node -v)
-NODE_VERSION_MAJ = $(shell echo $(NODE_VERSION) | cut -f1 -d. | cut -f2 -dv )
-NODE_VERSION_MIN = $(shell echo $(NODE_VERSION) | cut -f2 -d.)
-NODE_VERSION_LT_011 = $(shell [ $(NODE_VERSION_MAJ) -eq 0 -a $(NODE_VERSION_MIN) -lt 11 ] && echo true)
 
 GRUNT = ./node_modules/grunt-cli/bin/grunt
 BOWER = ./node_modules/bower/bin/bower
 NODE_PATH = ./node_modules
+BUILD_DIR = ./mockup/build
 
 DEBUG =
 ifeq ($(debug), true)
@@ -37,14 +34,14 @@ bundles: stamp-bower bundle-widgets bundle-structure bundle-plone
 	# ----------------------------------------------------------------------- #
 
 bundle-widgets:
-	mkdir -p build
+	mkdir -p $(BUILD_DIR)
 	NODE_PATH=$(NODE_PATH) $(GRUNT) bundle-widgets $(DEBUG) $(VERBOSE) --gruntfile=mockup/Gruntfile.js
 
 bundle-structure:
 	NODE_PATH=$(NODE_PATH) $(GRUNT) bundle-structure $(DEBUG) $(VERBOSE) --gruntfile=mockup/Gruntfile.js
 
 bundle-plone:
-	mkdir -p build
+	mkdir -p $(BUILD_DIR)
 	NODE_PATH=$(NODE_PATH) $(GRUNT) bundle-plone $(DEBUG) $(VERBOSE) --gruntfile=mockup/Gruntfile.js
 
 bundle-filemanager:
@@ -60,19 +57,10 @@ docs:
 	NODE_PATH=$(NODE_PATH) $(GRUNT) bundle-docs $(DEBUG) $(VERBOSE) --gruntfile=mockup/Gruntfile.js
 
 bootstrap-common:
-	mkdir -p build
+	mkdir -p $(BUILD_DIR)
 
 bootstrap: bootstrap-common
-	@echo node version: $(NODE_VERSION)
-ifeq ($(NODE_VERSION_LT_011),true)
-	# for node < v0.11.x
-	$(NPM) link --prefix=.
-	# remove lib/node_modules, which contains a symlink to the project root.
-	# This leads to infinite recursion at the grunt copy task on make docs.
-	rm -rf lib/node_modules
-else
 	$(NPM) link
-endif
 	NODE_PATH=$(NODE_PATH) $(BOWER) install --config.interactive=0
 	NODE_PATH=$(NODE_PATH) $(GRUNT) sed:bootstrap $(DEBUG) $(VERBOSE) --gruntfile=mockup/Gruntfile.js
 
@@ -99,6 +87,9 @@ test-jenkins: stamp-bower
 test-dev:
 	NODE_PATH=$(NODE_PATH) $(GRUNT) test_dev $(DEBUG) $(VERBOSE) --gruntfile=mockup/Gruntfile.js --pattern=$(pattern)
 
+test-dev-ff:
+	NODE_PATH=$(NODE_PATH) $(GRUNT) test_dev_ff $(DEBUG) $(VERBOSE) --gruntfile=mockup/Gruntfile.js --pattern=$(pattern)
+
 test-serve:
 	NODE_PATH=$(NODE_PATH) $(GRUNT) test_serve $(DEBUG) $(VERBOSE) --gruntfile=mockup/Gruntfile.js --pattern=$(pattern)
 
@@ -106,8 +97,8 @@ test-ci:
 	NODE_PATH=$(NODE_PATH) $(GRUNT) test_ci $(DEBUG) $(VERBOSE) --gruntfile=mockup/Gruntfile.js
 
 clean:
-	mkdir -p build
-	rm -rf build
+	mkdir -p $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
 	rm -rf node_modules
 	rm -rf mockup/bower_components
 	rm -f stamp-npm stamp-bower
@@ -122,6 +113,6 @@ publish-docs:
 	# echo -e "Publishing 'docs' bundle!\n"; cd mockup/docs; git add -fA .; git commit -m "Travis build $(TRAVIS_BUILD_NUMBER) pushed to 'docs'."; git push -fq https://$(GH_TOKEN)@github.com/plone/mockup.git gh-pages > /dev/null; cd ..;
 
 i18n-dump:
-	NODE_PATH=$(NODE_PATH) $(GRUNT) i18n-dump --gruntfile=mockup/Gruntfile.js 
+	NODE_PATH=$(NODE_PATH) $(GRUNT) i18n-dump --gruntfile=mockup/Gruntfile.js
 
-.PHONY: bundle bundle-widgets bundle-structure bundle-plone docs bootstrap bootstrap-nix jshint test test-once test-dev test-ci publish-docs clean clean-deep
+.PHONY: bundle bundle-widgets bundle-structure bundle-plone docs bootstrap bootstrap-nix jshint test test-once test-dev test-dev-ff test-ci publish-docs clean clean-deep

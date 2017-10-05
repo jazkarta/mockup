@@ -4,16 +4,21 @@
  *    vocabularyUrl(string): This is a URL to a JSON-formatted file used to populate the list (null)
  *    attributes(array): This list is passed to the server during an AJAX request to specify the attributes which should be included on each item. (['UID', 'Title', 'portal_type', 'path'])
  *    basePath(string): If this is set the widget will start in "Browse" mode and will pass the path to the server to filter the results. ('/')
+ *    rootPath(string): If this is set the widget will only display breadcrumb path elements deeprt than this path.
  *    mode(string): Possible values: 'search', 'browse'. If set to 'search', the catalog is searched for a searchterm. If set to 'browse', browsing starts at basePath. Default: 'search'.
- *    breadCrumbTemplate(string): Template to use for a single item in the breadcrumbs. ('/<a href="<%= path %>"><%= text %></a>')
+ *    breadCrumbTemplate(string): Template to use for a single item in the breadcrumbs. ('/<a href="<%- path %>"><%- text %></a>')
  *    breadCrumbTemplateSelector(string): Select an element from the DOM from which to grab the breadCrumbTemplate. (null)
- *    breadCrumbsTemplate(string): Template for element to which breadCrumbs will be appended. ('<span><span class="pattern-relateditems-path-label"><%= searchText %></span><a class="icon-home" href="/"></a><%= items %></span>')
+ *    breadCrumbsTemplate(string): Template for element to which breadCrumbs will be appended. ('<span><span class="pattern-relateditems-path-label"><%- searchText %></span><a class="icon-home" href="/"></a><%- items %></span>')
  *    breadCrumbsTemplateSelector(string): Select an element from the DOM from which to grab the breadCrumbsTemplate. (null)
  *    cache(boolean): Whether or not results from the server should be
  *    cached. (true)
  *    closeOnSelect(boolean): Select2 option. Whether or not the drop down should be closed when an item is selected. (false)
  *    dropdownCssClass(string): Select2 option. CSS class to add to the drop down element. ('pattern-relateditems-dropdown')
- *    folderTypes(array): Types which should be considered browsable. (["Folder"])
+ *  
+ * #this does not respect custom dx types which are also folderish:
+ * --> folderTypes(array): Types which should be considered browsable. (["Folder"])
+ * #   needs to be implemented with meta data field: is_folderish from vocabulary
+ * 
  *    homeText(string): Text to display in the initial breadcrumb item. (home)
  *    maximumSelectionSize(integer): The maximum number of items that can be selected in a multi-select control. If this number is less than 1 selection is not limited. (-1)
  *    multiple(boolean): Do not change this option. (true)
@@ -96,31 +101,34 @@ define([
       mode: 'search', // possible values are search and browse
       closeOnSelect: false,
       basePath: '/',
+      rootPath: '/',
       homeText: _t('home'),
-      folderTypes: ['Folder'],
+      //folderTypes: ['Folder'],   
       selectableTypes: null, // null means everything is selectable, otherwise a list of strings to match types that are selectable
-      attributes: ['UID', 'Title', 'portal_type', 'path', 'getIcon'],
+      attributes: ['UID', 'Title', 'portal_type', 'path','getURL', 'getIcon','is_folderish','review_state'],
       dropdownCssClass: 'pattern-relateditems-dropdown',
       maximumSelectionSize: -1,
+      treeVocabularyUrl: null,
       resultTemplate: '' +
-        '<div class="pattern-relateditems-result pattern-relateditems-type-<%= portal_type %> <% if (selected) { %>pattern-relateditems-active<% } %>">' +
-        '  <a href="#" class="pattern-relateditems-result-select <% if (selectable) { %>selectable<% } %> contenttype-<%= portal_type.toLowerCase() %>">' +
-        '    <% if (typeof getIcon !== "undefined" && getIcon) { %><span class="pattern-relateditems-result-icon"><img src="<%= getIcon %>" /></span><% } %>' +
-        '    <span class="pattern-relateditems-result-title"><%= Title %></span>' +
-        '    <span class="pattern-relateditems-result-path"><%= path %></span>' +
+        '<div class="   pattern-relateditems-result  <% if (selected) { %>pattern-relateditems-active<% } %>">' +
+        '  <a href="#" class=" pattern-relateditems-result-select <% if (selectable) { %>selectable<% } %>">' +
+        '    <% if (typeof getIcon !== "undefined" && getIcon) { %><img src="<%- getURL %>/@@images/image/icon "> <% } %>' +
+        '    <span class="pattern-relateditems-result-title  <% if (typeof review_state !== "undefined") { %> state-<%- review_state %> <% } %>  " /span>' +
+        '    <span class="pattern-relateditems contenttype-<%- portal_type.toLowerCase() %>"><%- Title %></span>' +
+        '    <span class="pattern-relateditems-result-path"><%- path %></span>' +
         '  </a>' +
         '  <span class="pattern-relateditems-buttons">' +
-        '  <% if (folderish) { %>' +
-        '     <a class="pattern-relateditems-result-browse" href="#" data-path="<%= path %>"></a>' +
+        '  <% if (is_folderish) { %>' +
+        '     <a class="pattern-relateditems-result-browse" href="#" data-path="<%- path %>"></a>' +
         '   <% } %>' +
         ' </span>' +
         '</div>',
       resultTemplateSelector: null,
       selectionTemplate: '' +
-        '<span class="pattern-relateditems-item pattern-relateditems-type-<%= portal_type %>">' +
-        ' <% if (typeof getIcon !== "undefined" && getIcon) { %><span class="pattern-relateditems-result-icon"><img src="<%= getIcon %>" /></span><% } %>' +
-        ' <span class="pattern-relateditems-item-title"><%= Title %></span>' +
-        ' <span class="pattern-relateditems-item-path"><%= path %></span>' +
+        '<span class="pattern-relateditems-item">' +
+        ' <% if (typeof getIcon !== "undefined" && getIcon) { %> <img src="<%- getURL %>/@@images/image/icon"> <% } %>' +
+        ' <span class="pattern-relateditems-item-title contenttype-<%- portal_type.toLowerCase() %> <% if (typeof review_state !== "undefined") { %> state-<%- review_state  %> <% } %>" ><%- Title %></span>' +
+        ' <span class="pattern-relateditems-item-path"><%- path %></span>' +
         '</span>',
       selectionTemplateSelector: null,
       breadCrumbsTemplate: '<span>' +
@@ -137,12 +145,15 @@ define([
           '</div>' +
         '</span>' +
         '<span class="pattern-relateditems-path-label">' +
-          '<%= searchText %></span><a class="crumb" href="/"><span class="glyphicon glyphicon-home"></span></a><%= items %>' +
+          '<%- searchText %></span><a class="crumb" href="<%- rootPath %>">' +
+          '<span class="glyphicon glyphicon-home"></span></a>' +
+          // ``items assumed to be santized html``
+          '<%= items %>' +
         '</span>' +
       '</span>',
       breadCrumbsTemplateSelector: null,
       breadCrumbTemplate: '' +
-        '/<a href="<%= path %>" class="crumb"><%= text %></a>',
+        '/<a href="<%- path %>" class="crumb"><%- text %></a>',
       breadCrumbTemplateSelector: null,
       escapeMarkup: function(text) {
         return text;
@@ -198,7 +209,10 @@ define([
     setBreadCrumbs: function() {
       var self = this;
       var path = self.currentPath ? self.currentPath : self.options.basePath;
+      var root = self.options.rootPath.replace(/\/$/, '');
       var html;
+      // strip site root from path
+      path = path.indexOf(root) === 0 ? path.slice(root.length) : path;
       if (path === '/') {
         var searchText = '';
         if (self.options.mode === 'search') {
@@ -206,11 +220,12 @@ define([
         }
         html = self.applyTemplate('breadCrumbs', {
           items: searchText,
-          searchText: _t('Search:')
+          searchText: _t('Search:'),
+          rootPath: self.options.rootPath
         });
       } else {
         var paths = path.split('/');
-        var itemPath = '';
+        var itemPath = root;
         var itemsHtml = '';
         _.each(paths, function(node) {
           if (node !== '') {
@@ -221,7 +236,9 @@ define([
             itemsHtml = itemsHtml + self.applyTemplate('breadCrumb', item);
           }
         });
-        html = self.applyTemplate('breadCrumbs', {items: itemsHtml, searchText: _t('Search:') });
+        html = self.applyTemplate('breadCrumbs', {items: itemsHtml,
+                                                  searchText: _t('Search:'),
+                                                  rootPath: self.options.rootPath});
       }
       var $crumbs = $(html);
       $('a.crumb', $crumbs).on('click', function(e) {
@@ -243,7 +260,7 @@ define([
               label: item.Title,
               id: item.UID,
               path: item.path,
-              folder: self.options.folderTypes.indexOf(item.portal_type) !== -1
+              folder: item.is_folderish
             };
             nodes.push(node);
           });
@@ -343,17 +360,17 @@ define([
     },
     init: function() {
       var self = this;
-
       self.query = new utils.QueryHelper(
         $.extend(true, {}, self.options, {pattern: self})
       );
       self.treeQuery = new utils.QueryHelper(
         $.extend(true, {}, self.options, {
           pattern: self,
+          vocabularyUrl: self.options.treeVocabularyUrl || self.options.vocabularyUrl,
           baseCriteria: [{
-            i: 'portal_type',
-            o: 'plone.app.querystring.operation.list.contains',
-            v: self.options.folderTypes
+            i: 'is_folderish',
+            o: 'plone.app.querystring.operation.selection.any',
+            v: 'True'
           }]
         })
       );
@@ -372,13 +389,14 @@ define([
       };
 
       Select2.prototype.initializeOrdering.call(self);
-
       self.options.formatResult = function(item) {
-        if (!item.portal_type || _.indexOf(self.options.folderTypes, item.portal_type) === -1) {
-          item.folderish = false;
-        } else {
-          item.folderish = true;
-        }
+        if (item.is_folderish){
+            item.folderish = true;
+           }
+         else {
+               item.folderish = false;
+           }
+      
 
         item.selectable = self.isSelectable(item);
 

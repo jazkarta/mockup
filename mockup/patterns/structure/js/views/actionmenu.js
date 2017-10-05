@@ -1,195 +1,130 @@
 define([
   'jquery',
   'underscore',
-  'backbone',
   'mockup-ui-url/views/base',
-  'mockup-patterns-structure-url/js/models/result',
   'mockup-utils',
+  'mockup-patterns-structure-url/js/models/result',
+  'mockup-patterns-structure-url/js/actions',
+  'mockup-patterns-structure-url/js/actionmenu',
   'text!mockup-patterns-structure-url/templates/actionmenu.xml',
+  'pat-registry',
   'translate',
+  'mockup-patterns-modal',
+  'mockup-patterns-tooltip',
   'bootstrap-dropdown'
-], function($, _, Backbone, BaseView, Result, utils, ActionMenuTemplate, _t) {
+], function($, _, BaseView, utils, Result, Actions, ActionMenu, ActionMenuTemplate, registry, _t) {
   'use strict';
 
-  var ActionMenu = BaseView.extend({
+  var ActionMenuView = BaseView.extend({
     className: 'btn-group actionmenu',
     template: _.template(ActionMenuTemplate),
-    events: {
-      'click .selectAll a': 'selectAll',
-      'click .cutItem a': 'cutClicked',
-      'click .copyItem a': 'copyClicked',
-      'click .pasteItem a': 'pasteClicked',
-      'click .move-top a': 'moveTopClicked',
-      'click .move-bottom a': 'moveBottomClicked',
-      'click .set-default-page a': 'setDefaultPageClicked',
-      'click .openItem a': 'openClicked',
-      'click .editItem a': 'editClicked'
-    },
-    initialize: function(options) {
-      this.options = options;
-      this.app = options.app;
-      this.model = options.model;
-      this.selectedCollection = this.app.selectedCollection;
-      if (options.canMove === false){
-        this.canMove = false;
-      }else {
-        this.canMove = true;
-      }
-    },
-    selectAll: function(e){
-      e.preventDefault();
+
+    // Static menu options
+    menuOptions: null,
+    // Dynamic menu options
+    menuGenerator: 'mockup-patterns-structure-url/js/actionmenu',
+    needsRescan: false,
+
+    eventConstructor: function(definition) {
       var self = this;
-      var page = 1;
-      var count = 0;
-      var getPage = function(){
-        self.app.loading.show();
-        $.ajax({
-          url: self.app.collection.url,
-          type: 'GET',
-          dataType: 'json',
-          data: {
-            query: self.app.collection.queryParser({
-              searchPath: self.model.attributes.path
-            }),
-            batch: JSON.stringify({
-              page: page,
-              size: 100
-            }),
-            attributes: JSON.stringify(self.app.queryHelper.options.attributes)
-          }
-        }).done(function(data){
-          var items = self.app.collection.parse(data, count);
-          count += items.length;
-          _.each(items, function(item){
-            self.app.selectedCollection.add(new Result(item));
-          });
-          page += 1;
-          if(data.total > count){
-            getPage();
-          }else{
-            self.app.loading.hide();
-            self.app.tableView.render();
-          }
-        });
+      var libName = definition.library,
+          method = definition.method;
+
+      if (!((typeof libName === 'string') && (typeof method === 'string'))) {
+        return false;
+      }
+
+      var doEvent = function(e) {
+        var libCls = require(libName);
+        var lib = new libCls(self);
+        return lib[method] && lib[method](e);
       };
-      getPage();
+      return doEvent;
     },
-    doAction: function(buttonName, successMsg, failMsg){
+
+    events: function() {
+      /* Backbone.view.events
+       * Specify a set of DOM events, which will bound to methods on the view.
+       */
       var self = this;
-      $.ajax({
-        url: self.app.buttons.get(buttonName).options.url,
-        data: {
-          selection: JSON.stringify([self.model.attributes.UID]),
-          folder: self.model.attributes.path,
-          _authenticator: utils.getAuthenticator()
-        },
-        dataType: 'json',
-        type: 'POST'
-      }).done(function(data){
-        if(data.status === 'success'){
-          self.app.setStatus(_t(successMsg + ' "' + self.model.attributes.Title + '"'));
-          self.app.collection.pager();
-          self.app.updateButtons();
-        }else{
-          self.app.setStatus(_t('Error ' + failMsg + ' "' + self.model.attributes.Title + '"'));
-        }
-      }); 
-    },
-    cutClicked: function(e) {
-      e.preventDefault();
-      this.doAction('cut', _t('Cut'), _t('cutting'));
-    },
-    copyClicked: function(e) {
-      e.preventDefault();
-      this.doAction('copy', _t('Copied'), _t('copying'));
-    },
-    pasteClicked: function(e) {
-      e.preventDefault();
-      this.doAction('paste', _t('Pasted into'), _t('Error pasting into'));
-    },
-    moveTopClicked: function(e) {
-      e.preventDefault();
-      this.app.moveItem(this.model.attributes.id, 'top');
-    },
-    moveBottomClicked: function(e) {
-      e.preventDefault();
-      this.app.moveItem(this.model.attributes.id, 'bottom');
-    },
-    setDefaultPageClicked: function(e) {
-      e.preventDefault();
-      var self = this;
-      $.ajax({
-        url: self.app.getAjaxUrl(self.app.setDefaultPageUrl),
-        type: 'POST',
-        data: {
-          '_authenticator': $('[name="_authenticator"]').val(),
-          'id': this.model.attributes.id
-        },
-        success: function(data) {
-          self.app.ajaxSuccessResponse.apply(self.app, [data]);
-        },
-        error: function(data) {
-          self.app.ajaxErrorResponse.apply(self.app, [data]);
-        }
+      var result = {};
+      var menuOptionsCategorized = {};
+      _.each(self.menuOptions, function(menuOption, key) {
+          // set a unique identifier to uniquely bind the events.
+          var idx = utils.generateId();
+          menuOption.idx = idx;
+          menuOption.name = key;  // we want to add the action's key as class name to the output.
+
+          var category = menuOption.category || 'dropdown';
+          if (menuOptionsCategorized[category] === undefined) {
+              menuOptionsCategorized[category] = [];
+          }
+          menuOptionsCategorized[category].push(menuOption);
+          if (menuOption.modal || menuOption.category === 'button') {
+            self.needsRescan = true;
+          }
+
+		      // Create event handler and add it to the results object.
+          var e = self.eventConstructor(menuOption);
+          if (e) {
+            result['click a.' + idx] = e;
+          }
       });
+
+      // Abusing the loop above to also initialize menuOptionsCategorized
+      self.menuOptionsCategorized = menuOptionsCategorized;
+      return result;
     },
-    getSelectedBaseUrl: function() {
+
+    initialize: function(options) {
       var self = this;
-      return self.model.attributes.getURL;
-    },
-    getWindow: function() {
-      var win = window;
-      if (win.parent !== window) {
-        win = win.parent;
+      BaseView.prototype.initialize.apply(self, [options]);
+      self.options = options;
+      self.selectedCollection = self.app.selectedCollection;
+
+      // Then acquire the constructor method if specified, and
+      var menuGenerator = self.options.menuGenerator || self.menuGenerator;
+      if (menuGenerator) {
+        var menuGen = require(menuGenerator);
+        // override those options here.  All definition done here so
+        // that self.events() will return the right things.
+        var menuOptions = menuGen(self);
+        if (typeof menuOptions === 'object') {
+          // Only assign this if we got the right basic type.
+          self.menuOptions = menuOptions;
+          // Should warn otherwise.
+        }
       }
-      return win;
-    },
-    openUrl: function(url) {
-      var self = this;
-      var win = self.getWindow();
-      var keyEvent = this.app.keyEvent;
-      if (keyEvent && keyEvent.ctrlKey) {
-        win.open(url);
-      } else {
-        win.location = url;
-      }
-    },
-    openClicked: function(e) {
-      e.preventDefault();
-      var self = this;
-      self.openUrl(self.getSelectedBaseUrl() + '/view');
-    },
-    editClicked: function(e) {
-      e.preventDefault();
-      var self = this;
-      self.openUrl(self.getSelectedBaseUrl() + '/edit');
     },
     render: function() {
       var self = this;
       self.$el.empty();
 
       var data = this.model.toJSON();
-      data.attributes = self.model.attributes;
-      data.pasteAllowed = self.app.pasteAllowed;
-      data.canSetDefaultPage = self.app.setDefaultPageUrl;
-      data.inQueryMode = self.app.inQueryMode();
       data.header = self.options.header || null;
-      data.canMove = self.canMove;
+      data.menuOptions = self.menuOptionsCategorized;
 
       self.$el.html(self.template($.extend({
         _t: _t,
         id: utils.generateId()
       }, data)));
 
-      self.$dropdown = self.$('.dropdown-toggle');
-      self.$dropdown.dropdown();
+      if (data.menuOptions.dropdown) {
+        self.$dropdown = self.$('.dropdown-toggle');
+        self.$dropdown.dropdown();
+      }
 
-      if (self.options.className){
+      if (self.options.className) {
         self.$el.addClass(self.options.className);
       }
+
+      if (this.needsRescan) {
+        registry.scan(this.$el);
+      }
+
       return this;
     }
   });
 
-  return ActionMenu;
+  return ActionMenuView;
 });

@@ -1,10 +1,279 @@
 Changelog
 =========
 
-2.1.0 (Unreleased)
--------------------
+2.3.0 (2016-08-19)
+------------------
+
+Incompatibilities:
+
+- Remove support for node version < ``0.11`` and update travis dependencies.
+  [thet]
 
 New:
+
+- Fix urls in modals not opening in new window
+  [vangheem]
+
+- Update safe bower.json dependencies except backbone which tests would fail.
+  Keep jQuery at ``1.11.3`` as long as this might be used in Plone 4.x together with plone.app.jquerytools, which uses the deprecated internal ``$.buildFragments`` method.
+  [thet]
+
+- Update package.json dependencies, except less which has incompatible changes since 2.0 (less.parse).
+  [thet]
+
+- add body class for active popover
+  [vangheem]
+
+- Be able to set structure status from server with object of { text: '', label: '', type: 'warning'}
+  so you can customize the status message from ajax handlers.
+  [vangheem]
+
+- Add ``test-dev-ff`` as Makefile target and the related grunt/karma setup to run tests in Firefox.
+  [thet]
+
+- Structure pattern:
+  - Allow definition of action menu items not only as dropdowns but also as buttons.
+  - Add ``openItem`` and ``editItem`` actions as buttons and remove the open icon from the title column.
+  - Open ``openItem`` links according to ``typeToViewAction`` instead of default with the ``/view`` postfix.
+  - Open ``editItem`` under ``/@@edit`` instead ``/edit``.
+  - Remove JS event handlers for externally opening simple URLs and use the href attribute instead.
+  - Add ``iconCSS`` option for action menus items to add icons.
+  - Add ``modal`` option for action menus items to allow links open in a modal.
+  - Add ``iconSize`` option to set the icon size if a item has an image.
+  - Use icons for all actionmenu entries.
+  - Use the tooltip pattern for all actionmenu buttons.
+  - Use pat-moment also for ``start``, ``end`` and ``last_comment_date`` columns.
+  - For columns with date fields, show an empty column if the date value is 'None'.
+  - Remove the checkbox and the actionmenu from the breadcrumbs bar for the current active folder to simplify the structure pattern.
+    The actionmenu contained redundant actions (cut, copy, paste) and selecting the current folder is possible one level up.
+  - Don't show empty alerts with ``alert-warning`` CSS class.
+    Show them transparent but in the same height as if they were not empty.
+    Align HTML structue with bootstrap ones and use ``<strong>`` for alert labels.
+  - Fix rearrange button
+
+  [thet]
+
+Fixes:
+
+- Upload pattern LESS: included omitted styles for progress bar
+  in upload patttern by importing seletected styles from Bootstrap LESS.
+  Fixes incorrect/omitted display of progress bar in plone.app.widgets 1.x.
+  Built widgets.min.css is only 64 bytes larger, when gzipped.
+  [seanupton]
+
+- Updated the documentation in LEARN.md
+  [janga1997]
+
+- Fix issues where querystring widget was broke due to issues with
+  checks for undefined
+  [datakurre]
+
+- Escape input into select2 widget
+  [vangheem]
+
+- Fix issue where using filter when paging would not work in the structure pattern
+  [vangheem]
+
+- Fix positioning of popovers in structure
+  [vangheem]
+
+- Fix structure to always default to page 1 of results when moving between breadcrumbs
+  [vangheem]
+
+- Fix possible grid markup in modal
+  [petschki]
+
+- Fix paste button not working
+  [vangheem]
+
+- Re-add missing ``mockup-patterns-autotoc`` and ``mockup-patterns-modal`` dependencies to TinyMCE link modal.
+  [thet]
+
+- Fix tests and mocks on real browsers for structure pattern test, which threw CSRF errors.
+  [metatoaster]
+
+- Moment pattern: Don't try to parse obvious invalid dates ("None", "").
+  Avoids Moment.js deprecation warnings.
+  [thet]
+
+
+2.2.0 (2016-03-31)
+------------------
+
+New:
+
+- set XML syntax coloring for .pt files in text editor
+  [ebrehault]
+
+- Structure now accept customization options for a number of things in
+  the form of requirejs modules.  This currently includes the extended
+  menuOptions definition, the menuGenerator per result item, the click
+  handler the link for each individual item, and the collection module
+  for interaction with the server side API for item generation.
+
+  Where applicable, the default implementation are now named requirejs
+  includes with those as the defaults to the relevant parameters.
+
+  Incidentally, this also required a major cleanup/refactoring of how
+  the ResultCollection class interacts with the pattern and its support
+  classes.
+  [metatoaster]
+
+- Structure now supports IPublishTraverse style subpaths for push state.
+  [metatoaster]
+
+- Alternative parameter/syntax for specification of the pushState url to
+  be inline with the usage of ``{path}`` token in URL templates.
+  [metatoaster]
+
+Fixes:
+
+- Fix fakeserver ``relateditems-test.json`` response to return ISO dates for ``CreationDate``, ``ModificationDate`` and ``EffectiveDate``, as they really do in Plone.
+  This resolves a moment deprecation warning in structure examples.
+  [thet]
+
+- JSHint fixes and jscs formatings for structure pattern.
+  [thet]
+
+- Cleanup RequireJS dependencies.
+  [thet]
+
+- Fix TinyMCE to work with Safari when using inline mode. This fixes bug where Safari
+  would not work with mosaic
+  [vangheem]
+
+- ``.jscs.json`` format fixes for newer jscs versions.
+  [thet]
+
+- Fix ``Makefile`` to use ``mockup/build`` instead of ``build``.
+  [thet]
+
+- Fix structure so rendering does not fail when paste button is missing.
+  [metatoaster]
+
+- Fix structure so that different views can have its own saved visible
+  column ordering settings.  Also loosen the coupling of the columns to
+  the data to aid in view rendering.
+  [metatoaster]
+
+- Fix Build CSS button in thememapper with file system-based themes to display
+  the generated CSS in the editor.
+  [ebrehault]
+
+2.1.3 (2016-02-27)
+New:
+
+- Upgrade TinyMCE to 4.3.4
+  [vangheem]
+
+
+Fixes:
+
+
+
+2.1.3 (2016-03-10)
+------------------
+
+New:
+
+- Fix resource registry not allowing to go into development mode when
+  bundle is selected
+  [vangheem]
+
+- Add rootPath suppport to relatedItems, to support navigation roots.
+  [alecm]
+
+Fixes:
+
+- fix query string preview using date queries
+  [vangheem]
+
+- fix saving values for query string
+  [vangheem]
+
+- be able to use multiple importcss_file_filter files
+  [vangheem]
+
+- Fix issue where if existing querystring path value is ".::1",
+  after edit, the wrong value will be selected
+
+- Calculate z-index for modals dynamically to always be on top
+  [vangheem]
+
+- Fix path widgets initialization in querystring pattern.
+  [Gagaro]
+
+- Fix XSS vulnerability issues in structure and relateditem pattern.
+  [metatoaster]
+
+- Fix `aria-hidden` attribute control problem on folder content panel
+  [terapyon]
+
+- Trim links in tinymce before inserting them in the source.
+  [Gagaro]
+
+- Ensure we have all content for tree query in relateditems
+  [Gagaro]
+
+- Fix default value for treeVocabularyUrl in relateditems.
+  [Gagaro]
+
+2.1.2 (2016-01-08)
+------------------
+
+
+Fixes:
+
+- Changed how the querystring pattern displays path-based criteria to use
+  related items widget and some pre-baked often-used queries
+  [obct537]
+
+
+2.1.1 (2015-12-17)
+------------------
+
+New:
+
+
+- do not set overflow hidden on modal wrapper parent. This should already
+  be taken care of with plone-modal-open class being applied to the body.
+  This should fix issues with scrolling when this isn't properly cleared
+  [vangheem]
+- Changed how the querystring pattern displays options for path-based queries,
+  to improve usability for less tech-savvy users.
+  [obct537]
+
+Fixes:
+
+- Use ``selection.any`` in querystring pattern.
+  Issue https://github.com/plone/Products.CMFPlone/issues/1040
+  [maurits]
+
+- Import TinyMCE ``Content.Objects.less`` from the lightgray skin in ``less``
+  mode, not ``Content.less`` in ``inline`` mode.
+  Fixes plone/Products.CMFPlone/#755 - visual aids not visible.
+  ``Content.Objects.less`` also doesn't overwrite our fonts.
+  [thet]
+
+- Enforce a ``min-width`` for tables while editing and visual aids turned on.
+  Fixes plone/Products.CMFPlone#920.
+  [thet]
+
+- Cleanup and rework: contenttype-icons and showing thumbnails
+  for images/leadimages in listings ...
+  https://github.com/plone/Products.CMFPlone/issues/1226
+  [fgrcon]
+
+- Fix flaky behavior of Resource Registries buttons
+  https://github.com/plone/Products.CMFPlone/issues/1141
+  [davilima6]
+
+2.1.0 (2015-11-10)
+------------------
+
+New:
+- Fixed issue causing the querystring pattern to query multiple times per change
+  [obct537]
 
 - Added the ``momentFormat`` option to the ``structure`` pattern.
   [Gagaro]
@@ -32,8 +301,8 @@ Fixes:
 
 - Set value for ``ReferenceWidget`` in querystring.
   [Gagaro]
-  
-- Correction of a mistake in css z-index related items widget. 
+
+- Correction of a mistake in css z-index related items widget.
   The content bar appeared behind the widget. [hersonrodrigues]
 
 - Fix modal when leaving a modal in a modal.

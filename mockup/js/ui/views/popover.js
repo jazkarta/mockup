@@ -1,11 +1,10 @@
 define([
   'jquery',
   'underscore',
-  'backbone',
   'mockup-ui-url/views/container',
   'mockup-patterns-backdrop',
   'text!mockup-ui-url/templates/popover.xml',
-], function($, _, Backbone, ContainerView, Backdrop, PopoverTemplate) {
+], function($, _, ContainerView, Backdrop, PopoverTemplate) {
   'use strict';
 
   var PopoverView = ContainerView.extend({
@@ -42,7 +41,7 @@ define([
       this.bindTriggerEvents();
 
       this.on('render', function() {
-        this.$el.attr('role', 'tooltip').attr('aria-hidden', 'true');
+        this.$el.attr('role', 'tooltip').attr('aria-hidden', 'false');
         this.renderTitle();
         this.renderContent();
       }, this);
@@ -74,6 +73,7 @@ define([
         }, this);
       }
     },
+
     getPosition: function() {
       var $el = this.triggerView.$el;
       return $.extend({}, {
@@ -81,6 +81,16 @@ define([
         height: $el[0].offsetHeight
       }, $el.offset());
     },
+
+    getBodyClassName: function(){
+      var name = 'popover-';
+      if(this.options.id){
+        name += this.options.id + '-';
+      }
+      name += 'active';
+      return name;
+    },
+
     show: function() {
       /* hide existing */
       $('.popover:visible').each(function(){
@@ -90,6 +100,25 @@ define([
         }
       });
 
+      this.position();
+
+      this.setBackdrop();
+      if (this.useBackdrop === true) {
+        this.backdrop.show();
+      }
+
+      this.opened = true;
+
+      if (this.triggerView) {
+        this.triggerView.$el.addClass('active');
+      }
+
+      this.uiEventTrigger('show', this);
+      this.$el.attr('aria-hidden', 'false');
+      $('body').addClass(this.getBodyClassName());
+    },
+
+    position: function(){
       var pos = this.getPosition();
       var $tip = this.$el, tp, placement, actualWidth, actualHeight;
 
@@ -116,21 +145,8 @@ define([
       }
 
       this.applyPlacement(tp, placement);
-
-      this.setBackdrop();
-      if (this.useBackdrop === true) {
-        this.backdrop.show();
-      }
-
-      this.opened = true;
-
-      if (this.triggerView) {
-        this.triggerView.$el.addClass('active');
-      }
-
-      this.uiEventTrigger('show', this);
-      this.$el.attr('aria-hidden', 'false');
     },
+
     applyPlacement: function(offset, placement) {
       var $el = this.$el,
         $tip = this.$el,
@@ -186,9 +202,11 @@ define([
       this.$el.removeClass('active');
       if (this.triggerView) {
         this.triggerView.$el.removeClass('active');
+        this.triggerView.$el.attr('aria-hidden', 'true');
       }
       this.uiEventTrigger('hide', this);
       this.$el.attr('aria-hidden', 'true');
+      $('body').removeClass(this.getBodyClassName());
     },
     toggle: function(button, e) {
       if (this.opened) {
@@ -223,4 +241,3 @@ define([
 
   return PopoverView;
 });
-

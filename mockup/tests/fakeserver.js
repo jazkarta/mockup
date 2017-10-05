@@ -230,7 +230,7 @@ define([
       // staff
       {UID: 'asdfasdf9sdf', Title: 'Mike', path: '/about/staff/mike', portal_type: 'Document'},
       {UID: 'cvbcvb82345', Title: 'Joe', path: '/about/staff/joe', portal_type: 'Document'},
-      
+
       // upload file
       {UID: 'sldlfkjsldkjlskdjf', Title: 'blah.png', path: 'blah.png', portal_type: 'Image'}
 
@@ -240,11 +240,16 @@ define([
     var addSomeData = function(list) {
       /* add getURL value, review_state, modification, creation */
       var dates = [
-        'January 1, 2011',
-        'February 10, 2012',
-        'March 12, 2013',
-        'April 1, 2012',
-        'May 20, 2013'
+        '2011-01-01T10:10:10+02:00',
+        '2012-02-10T10:10:10+02:00',
+        '2013-03-12T10:10:10+02:00',
+        '2012-04-01T10:10:10+02:00',
+        '2013-03-20T10:10:10+02:00',
+        'None',
+        'None',
+        'None',
+        'None',
+        'None',
       ];
       for (var i = 0; i < list.length; i = i + 1) {
         var data = list[i];

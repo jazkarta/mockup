@@ -1,7 +1,6 @@
 define([
   'jquery',
   'underscore',
-  'backbone',
   'mockup-patterns-structure-url/js/views/tablerow',
   'text!mockup-patterns-structure-url/templates/table.xml',
   'mockup-ui-url/views/base',
@@ -11,8 +10,8 @@ define([
   'mockup-patterns-structure-url/js/views/actionmenu',
   'translate',
   'bootstrap-alert'
-], function($, _, Backbone, TableRowView, TableTemplate, BaseView, Sortable,
-            Moment, Result, ActionMenu, _t) {
+], function($, _, TableRowView, TableTemplate, BaseView, Sortable,
+            Moment, Result, ActionMenuView, _t) {
   'use strict';
 
   var TableView = BaseView.extend({
@@ -28,18 +27,27 @@ define([
       self.listenTo(self.selectedCollection, 'reset', self.render);
       self.collection.pager();
       self.subsetIds = [];
-      self.contextInfo = self.folderModel = self.folderMenu = null;
+      self.contextInfo = null;
 
       self.app.on('context-info-loaded', function(data) {
         self.contextInfo = data;
         /* set default page info */
         self.setContextInfo();
       });
+
+      self.dateColumns = [
+        'ModificationDate',
+        'EffectiveDate',
+        'CreationDate',
+        'ExpirationDate',
+        'start',
+        'end',
+        'last_comment_date'
+      ];
     },
     events: {
       'click .fc-breadcrumbs a': 'breadcrumbClicked',
       'change .select-all': 'selectAll',
-      'change .fc-breadcrumbs-container input[type="checkbox"]': 'selectFolder'
     },
     setContextInfo: function() {
       var self = this;
@@ -56,43 +64,32 @@ define([
           $crumbs.eq(idx).html(crumb.title);
         });
       }
-      if (data.object){
-        self.folderModel = new Result(data.object);
-        $('.context-buttons', self.$el).show();
-        if (self.selectedCollection.findWhere({UID: data.object.UID})){
-          $('input[type="checkbox"]', self.$breadcrumbs)[0].checked = true;
-        }
-        self.folderMenu = new ActionMenu({
-          app: self.app,
-          model: self.folderModel,
-          header: _t('Actions on current folder'),
-          canMove: false
-        });
-        $('.input-group-btn', self.$breadcrumbs).empty().append(self.folderMenu.render().el);
-      }else {
-        self.folderModel = null;
-      }
     },
     render: function() {
       var self = this;
       self.$el.html(self.template({
         _t: _t,
         pathParts: _.filter(
-          self.app.queryHelper.getCurrentPath().split('/').slice(1),
+          self.app.getCurrentPath().split('/').slice(1),
           function(val) {
             return val.length > 0;
           }
         ),
         status: self.app.status,
-        statusType: self.app.statusType,
         activeColumns: self.app.activeColumns,
         availableColumns: self.app.availableColumns
       }));
-      self.$breadcrumbs = $('.fc-breadcrumbs-container', self.$el);
 
       if (self.collection.length) {
         var container = self.$('tbody');
         self.collection.each(function(result) {
+          self.dateColumns.map(function (col) {
+            // empty column instead of displaying "None".
+            if (result.attributes.hasOwnProperty(col) && (result.attributes[col] === 'None' || !result.attributes[col] )) {
+              result.attributes[col] = '';
+            }
+          });
+
           var view = (new TableRowView({
             model: result,
             app: self.app,
@@ -102,10 +99,14 @@ define([
         });
       }
       self.moment = new Moment(self.$el, {
-        selector: '.ModificationDate,.EffectiveDate,.CreationDate,.ExpirationDate',
+        selector: '.' + self.dateColumns.join(',.'),
         format: self.options.app.momentFormat
       });
-      self.addReordering();
+
+      if (self.app.options.moveUrl) {
+        self.addReordering();
+      }
+
       self.storeOrder();
       return this;
     },
@@ -124,19 +125,9 @@ define([
         }
       });
       path += $el.attr('data-path');
-      this.app.queryHelper.currentPath = path;
+      this.app.setCurrentPath(path);
+      this.collection.currentPage = 1;
       this.collection.pager();
-    },
-    selectFolder: function(e) {
-      var self = this;
-      if (self.folderModel){
-        if ($(e.target).is(':checked')) {
-          self.selectedCollection.add(self.folderModel.clone());
-        } else {
-          this.selectedCollection.removeByUID(self.folderModel.attributes.UID);
-        }
-        self.setContextInfo();
-      }
     },
     selectAll: function(e) {
       if ($(e.target).is(':checked')) {
@@ -158,14 +149,14 @@ define([
       var self = this;
       // if we have a custom query going on, we do not allow sorting.
       if (self.app.inQueryMode()) {
-        self.app.setStatus(_t('Can not order items while querying'));
+        self.app.setStatus({text: _t('Can not order items while querying'), type: 'warning'});
         self.$el.removeClass('order-support');
         return;
       }
       self.$el.addClass('order-support');
       var dd = new Sortable(self.$('tbody'), {
         selector: 'tr',
-        createDragItem: function(pattern, $el){
+        createDragItem: function(pattern, $el) {
           var $tr = $el.clone();
           var $table = $('<table><tbody></tbody></table>');
           $('tbody', $table).append($tr);
@@ -187,7 +178,7 @@ define([
     storeOrder: function() {
       var self = this;
       var subsetIds = [];
-      self.$('tbody tr.itemRow').each(function(idx) {
+      self.$('tbody tr.itemRow').each(function() {
         subsetIds.push($(this).attr('data-id'));
       });
       self.subsetIds = subsetIds;

@@ -91,6 +91,7 @@ define([
       margin: 20,
       position: 'center middle', // format: '<horizontal> <vertical>' -- allowed values: top, bottom, left, right, center, middle
       triggers: [],
+      zIndexSelector: '.plone-modal-wrapper,.plone-modal-backdrop',
       backdrop: 'body', // Element to initiate the Backdrop on.
       backdropOptions: {
         zIndex: '1040',
@@ -334,7 +335,12 @@ define([
 
         // Non-ajax link (I know it says "ajaxUrl" ...)
         if (options.displayInModal === false) {
-          window.parent.location.href = url;
+          if($action.attr('target') === '_blank'){
+            window.open(url, '_blank');
+            self.loading.hide();
+          }else{
+            window.location = url;
+          }
           return;
         }
 
@@ -455,9 +461,6 @@ define([
             e.preventDefault();
             $(e.target).trigger('destroy.plone-modal.patterns');
           });
-
-        // cleanup html
-        $('.row', self.$modal).removeClass('row');
 
         // form
         if (options.form) {
@@ -771,7 +774,11 @@ define([
             self.$el.parents(self.options.backdrop),
             self.options.backdropOptions
           ),
-          zIndex = self.options.backdropOptions.zIndex !== null ? parseInt(self.options.backdropOptions.zIndex, 10) + 1 : 1041;
+          zIndex = 1041;
+
+      $(self.options.zIndexSelector).each(function(){
+        zIndex = Math.max(zIndex, parseInt($(this).css('zIndex')) + 1 || 1041);
+      });
 
       self.$wrapper = $('<div/>')
         .hide()

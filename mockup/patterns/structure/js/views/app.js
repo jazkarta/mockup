@@ -1,7 +1,6 @@
 define([
   'jquery',
   'underscore',
-  'backbone',
   'mockup-ui-url/views/toolbar',
   'mockup-ui-url/views/buttongroup',
   'mockup-ui-url/views/button',
@@ -21,20 +20,23 @@ define([
   'translate',
   'pat-logger',
   'jquery.cookie'
-], function($, _, Backbone, Toolbar, ButtonGroup, ButtonView, BaseView,
-            TableView, SelectionWellView,
-            GenericPopover, RearrangeView, SelectionButtonView,
-            PagingView, ColumnsView, TextFilterView, UploadView,
-            ResultCollection, SelectedCollection, utils, _t, logger) {
+], function($, _, Toolbar, ButtonGroup, ButtonView, BaseView,
+  TableView, SelectionWellView,
+  GenericPopover, RearrangeView, SelectionButtonView,
+  PagingView, ColumnsView, TextFilterView, UploadView,
+  _ResultCollection, SelectedCollection, utils, _t, logger) {
   'use strict';
 
   var log = logger.getLogger('pat-structure');
 
   var AppView = BaseView.extend({
     tagName: 'div',
-    status: '',
+    status: {
+      type: 'none',
+      text: '',
+      label: ''
+    },
     pasteAllowed: !!$.cookie('__cp'),
-    statusType: 'warning',
     sort_on: 'getObjPositionInParent',
     sort_order: 'ascending',
     additionalCriterias: [],
@@ -44,57 +46,40 @@ define([
       BaseView.prototype.initialize.apply(self, [options]);
       self.loading = new utils.Loading();
       self.loading.show();
+      self.pasteAllowed = !!$.cookie('__cp');
 
       /* close popovers when clicking away */
-      $(document).click(function(e){
+      $(document).click(function(e) {
         var $el = $(e.target);
-        if(!$el.is(':visible')){
+        if (!$el.is(':visible')) {
           // ignore this, fake event trigger to element that is not visible
           return;
         }
-        if($el.is('a') || $el.parent().is('a')){
+        if ($el.is('a') || $el.parent().is('a')) {
           return;
         }
         var $popover = $('.popover:visible');
-        if($popover.length > 0 && !$.contains($popover[0], $el[0])){
+        if ($popover.length > 0 && !$.contains($popover[0], $el[0])) {
           var popover = $popover.data('component');
-          if(popover){
+          if (popover) {
             popover.hide();
           }
         }
       });
 
+      var ResultCollection = require(options.collectionConstructor);
+
       self.collection = new ResultCollection([], {
+        // Due to default implementation need to poke at things in here,
+        // view is passed.
+        view: self,
         url: self.options.collectionUrl,
-        queryParser: function(options) {
-          if(options === undefined){
-            options = {};
-          }
-          var term = null;
-          if (self.toolbar) {
-            term = self.toolbar.get('filter').term;
-          }
-          var sortOn = self['sort_on']; // jshint ignore:line
-          if (!sortOn) {
-            sortOn = 'getObjPositionInParent';
-          }
-          return JSON.stringify({
-            criteria: self.queryHelper.getCriterias(term, $.extend({}, options, {
-              additionalCriterias: self.additionalCriterias
-            })),
-            sort_on: sortOn,
-            sort_order: self['sort_order'] // jshint ignore:line
-          });
-        },
-        queryHelper: self.options.queryHelper
       });
 
       self.setAllCookieSettings();
 
-      self.queryHelper = self.options.queryHelper;
       self.selectedCollection = new SelectedCollection();
       self.tableView = new TableView({app: self});
-
       self.pagingView = new PagingView({app: self});
 
       /* initialize buttons */
@@ -103,17 +88,18 @@ define([
       self.wellView = new SelectionWellView({
         collection: self.selectedCollection,
         triggerView: self.toolbar.get('selected-items'),
-        app: self
+        app: self,
+        id: 'structure-well'
       });
 
       self.toolbar.get('selected-items').disable();
       self.buttons.disable();
 
       var timeout = 0;
-      self.selectedCollection.on('add remove reset', function(/*modal, collection*/) {
+      self.selectedCollection.on('add remove reset', function( /*modal, collection*/ ) {
         /* delay rendering since this can happen in batching */
         clearTimeout(timeout);
-        timeout = setTimeout(function(){
+        timeout = setTimeout(function() {
           self.updateButtons();
         }, 100);
       }, self);
@@ -141,43 +127,82 @@ define([
         self.loading.show();
         self.updateButtons();
 
-        /* maintain history here */
-        if(self.options.urlStructure && window.history && window.history.pushState){
-          if (!self.doNotPushState){
-            var path = self.queryHelper.getCurrentPath();
-            if(path === '/'){
-              path = '';
-            }
-            var url = self.options.urlStructure.base + path + self.options.urlStructure.appended;
-            window.history.pushState(null, null, url);
-            $('body').trigger('structure-url-changed', path);
-          }else{
-            self.doNotPushState = false;
-          }
+        // the remaining calls are related to window.pushstate.
+        // abort if feature unavailable.
+        if (!(window.history && window.history.pushState)) {
+          return;
         }
+
+        // undo the flag set by popState to prevent the push state
+        // from being triggered here, and early abort out of the
+        // function to not execute the folowing pushState logic.
+        if (self.doNotPushState) {
+          self.doNotPushState = false;
+          return;
+        }
+
+        var path = self.getCurrentPath();
+        var url;
+        if (path === '/') {
+          path = '';
+        }
+        /* maintain history here */
+        if (self.options.pushStateUrl) {
+          // permit an extra slash in pattern, but strip that if there
+          // as path always will be prefixed with a `/`
+          var pushStateUrl = self.options.pushStateUrl.replace(
+            '/{path}', '{path}');
+          url = pushStateUrl.replace('{path}', path);
+          window.history.pushState(null, null, url);
+        } else if (self.options.urlStructure) {
+          // fallback to urlStructure specification
+          url = self.options.urlStructure.base + path + self.options.urlStructure.appended;
+          window.history.pushState(null, null, url);
+        }
+
+        if (self.options.traverseView) {
+          // flag specifies that the context view implements a traverse
+          // view (i.e. IPublishTraverse) and the path is a virtual path
+          // of some kind - use the base object instead for that by not
+          // specifying a path.
+          path = '';
+          // TODO figure out whether the following event after this is
+          // needed at all.
+        }
+        $('body').trigger('structure-url-changed', path);
+
       });
 
-      if (self.options.urlStructure && utils.featureSupport.history()){
-        $(window).bind('popstate', function () {
+      if ((self.options.pushStateUrl || self.options.urlStructure) && utils.featureSupport.history()) {
+        $(window).bind('popstate', function() {
           /* normalize this url first... */
-          var url = window.location.href;
-          if(url.indexOf('?') !== -1){
+          var win = utils.getWindow();
+          var url = win.location.href;
+          var base, appended;
+          if (url.indexOf('?') !== -1) {
             url = url.split('?')[0];
           }
-          if(url.indexOf('#') !== -1){
+          if (url.indexOf('#') !== -1) {
             url = url.split('#')[0];
           }
-          // take off the base url
-          var path = url.substring(self.options.urlStructure.base.length);
-          if(path.substring(path.length - self.options.urlStructure.appended.length) ===
-              self.options.urlStructure.appended){
-            /* check that it ends with appended value */
-            path = path.substring(0, path.length - self.options.urlStructure.appended.length);
+          if (self.options.pushStateUrl) {
+            var tmp = self.options.pushStateUrl.split('{path}');
+            base = tmp[0];
+            appended = tmp[1];
+          } else {
+            base = self.options.urlStructure.base;
+            appended = self.options.urlStructure.appended;
           }
-          if(!path){
+          // take off the base url
+          var path = url.substring(base.length);
+          if (path.substring(path.length - appended.length) === appended) {
+            /* check that it ends with appended value */
+            path = path.substring(0, path.length - appended.length);
+          }
+          if (!path) {
             path = '/';
           }
-          self.queryHelper.currentPath = path;
+          self.setCurrentPath(path);
           $('body').trigger('structure-url-changed', path);
           // since this next call causes state to be pushed...
           self.doNotPushState = true;
@@ -188,8 +213,10 @@ define([
           self.keyEvent = e;
         });
       }
+
+      self.togglePasteBtn();
     },
-    updateButtons: function(){
+    updateButtons: function() {
       var self = this;
       if (self.selectedCollection.length) {
         self.toolbar.get('selected-items').enable();
@@ -199,21 +226,27 @@ define([
         self.buttons.disable();
       }
 
-      self.pasteAllowed = !!$.cookie('__cp');
-      if (self.pasteAllowed) {
-        self.buttons.get('paste').enable();
-      }else{
-        self.buttons.get('paste').disable();
+      self.togglePasteBtn();
+    },
+    togglePasteBtn: function(){
+      var self = this;
+      if (_.find(self.buttons.items, function(btn){ return btn.id === 'paste'; })) {
+        self.pasteAllowed = !!$.cookie('__cp');
+        if (self.pasteAllowed) {
+          self.buttons.get('paste').enable();
+        } else {
+          self.buttons.get('paste').disable();
+        }
       }
     },
     inQueryMode: function() {
       if (this.additionalCriterias.length > 0) {
         return true;
       }
-      if (this['sort_on'] && this['sort_on'] !== 'getObjPositionInParent') { // jshint ignore:line
+      if (this.sort_on && this.sort_on !== 'getObjPositionInParent') { // jshint ignore:line
         return true;
       }
-      if (this['sort_order'] !== 'ascending') { // jshint ignore:line
+      if (this.sort_order !== 'ascending') { // jshint ignore:line
         return true;
       }
       return false;
@@ -229,12 +262,19 @@ define([
       });
       return uids;
     },
+    getCurrentPath: function() {
+      return this.collection.getCurrentPath();
+    },
+    setCurrentPath: function(path) {
+      this.collection.setCurrentPath(path);
+    },
     getAjaxUrl: function(url) {
-      return url.replace('{path}', this.options.queryHelper.getCurrentPath());
+      return url.replace('{path}', this.getCurrentPath());
     },
     buttonClickEvent: function(button) {
       var self = this;
-      var data = null, callback = null;
+      var data = null;
+      var callback = null;
 
       if (button.url) {
         self.loading.show();
@@ -261,7 +301,7 @@ define([
         }
         data._authenticator = utils.getAuthenticator();
         if (data.folder === undefined) {
-          data.folder = self.options.queryHelper.getCurrentPath();
+          data.folder = self.getCurrentPath();
         }
 
         var url = self.getAjaxUrl(button.url);
@@ -288,7 +328,7 @@ define([
       }
       if (data.msg) {
         // give status message somewhere...
-        self.setStatus(data.msg);
+        self.setStatus(data.msg, data.status || 'warning');
       }
       if (callback !== null && callback !== undefined) {
         callback(data);
@@ -314,7 +354,8 @@ define([
 
       self.columnsView = new ColumnsView({
         app: self,
-        triggerView: columnsBtn
+        triggerView: columnsBtn,
+        id: 'structure-columns'
       });
       items.push(columnsBtn);
 
@@ -334,7 +375,8 @@ define([
         });
         self.rearrangeView = new RearrangeView({
           triggerView: rearrangeButton,
-          app: self
+          app: self,
+          id: 'structure-rearrange'
         });
         items.push(rearrangeButton);
       }
@@ -354,19 +396,19 @@ define([
 
       var buttons = [];
       _.each(self.options.buttons, function(buttonOptions) {
-        try{
+        try {
           var button = new ButtonView(buttonOptions);
           buttons.push(button);
 
-          if(button.form){
+          if (button.form) {
             buttonOptions.triggerView = button;
             buttonOptions.app = self;
             var view = new GenericPopover(buttonOptions);
             self.$el.append(view.el);
-          }else{
+          } else {
             button.on('button:click', self.buttonClickEvent, self);
           }
-        }catch(err){
+        } catch (err) {
           log.error('Error initializing button ' + buttonOptions.title + ' ' + err);
         }
       });
@@ -400,24 +442,41 @@ define([
         success: function(data) {
           if (data.msg) {
             self.setStatus(data.msg);
-          }else if (data.status !== 'success') {
+          } else if (data.status !== 'success') {
             // XXX handle error here with something?
-            self.setStatus('error moving item');
+            self.setStatus({text: 'error moving item', type: 'error'});
           }
           self.collection.pager(); // reload it all
         },
         error: function() {
-          self.setStatus('error moving item');
+          self.setStatus({text: 'error moving item', type: 'error'});
         }
       });
     },
-    setStatus: function(txt, type) {
-      this.status = txt;
-      if (type === undefined) {
-        type = 'warning';
+    setStatus: function(msg, type) {
+      if (!msg) {
+        // clear it
+        this.status.text = '';
+        this.status.label = '';
+        this.status.type = 'none';
+      } else if (typeof(msg) === 'string') {
+        this.status.text = msg;
+        this.status.label = '';
+        this.status.type = type || 'warning';
+      } else {
+        // support setting portal status messages here
+        this.status.label = msg.label || '';
+        this.status.text = msg.text;
+        this.status.type = msg.type || 'warning';
       }
-      this.statusType = type;
-      this.$('.status').addClass(type).html(txt);
+      // still need to manually set in case rendering isn't done(especially true for tests)
+      var $status = this.$('.status');
+      $status[0].className = 'alert alert-' + this.status.type + ' status';
+      var $text = $('<span></span>');
+      $text.text(this.status.text);
+      var $label = $('<strong></strong>');
+      $label.text(this.status.label);
+      $status.empty().append($label).append($text);
     },
     render: function() {
       var self = this;
@@ -463,13 +522,18 @@ define([
     },
     setCookieSetting: function(name, val) {
       $.cookie(this.cookieSettingPrefix + name,
-               JSON.stringify({'value': val})
+        JSON.stringify({
+          'value': val
+        })
       );
     },
     setAllCookieSettings: function() {
-      this.activeColumns = this.getCookieSetting('activeColumns', this.activeColumns);
+      this.activeColumns = this.getCookieSetting(
+        this.activeColumnsCookie,
+        this.activeColumns
+      );
       var perPage = this.getCookieSetting('perPage', 15);
-      if(typeof(perPage) === 'string'){
+      if (typeof(perPage) === 'string') {
         perPage = parseInt(perPage);
       }
       this.collection.howManyPer(perPage);
