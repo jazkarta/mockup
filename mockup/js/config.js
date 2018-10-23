@@ -34,8 +34,9 @@
       'docs-learn': 'LEARN.md',
       'dropzone': 'bower_components/dropzone/dist/dropzone-amd-module',
       'expect': 'bower_components/expect/index',
+      'jquery': 'js/jquery',
+      'moment': 'js/moment',
       'jqtree': 'bower_components/jqtree/tree.jquery',
-      'jquery': 'bower_components/jquery/dist/jquery',
       'jquery.browser': 'bower_components/jquery.browser/dist/jquery.browser',
       'jquery.cookie': 'bower_components/jquery.cookie/jquery.cookie',
       'jquery.event.drag': 'lib/jquery.event.drag',
@@ -103,7 +104,6 @@
       'mockup-router': 'js/router',
       'mockup-ui-url': 'js/ui',
       'mockup-utils': 'js/utils',
-      'moment': 'bower_components/moment/moment',
       'picker': 'bower_components/pickadate/lib/picker',
       'picker.date': 'bower_components/pickadate/lib/picker.date',
       'picker.time': 'bower_components/pickadate/lib/picker.time',
@@ -126,6 +126,8 @@
       'logging': 'bower_components/logging/src/logging'
     },
     shim: {
+      'jquery': { exports: 'window.jQuery' },
+      'moment': { exports: 'window.moment' },
       'JSXTransformer': { exports: 'window.JSXTransformer' },
       'backbone': { exports: 'window.Backbone', deps: ['underscore', 'jquery'] },
       'backbone.paginator': { exports: 'window.Backbone.Paginator', deps: ['backbone'] },
