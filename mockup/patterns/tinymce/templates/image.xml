@@ -2,13 +2,20 @@
   <div class="linkModal">
     <h1><%- insertHeading %></h1>
     <% if(_.contains(linkTypes, 'uploadImage')){ %>
-    <p class="info">Specify an image. It can be on this site already ("Internal Image"), an image you upload ("Upload"), or from an external site ("External Image").</p>
+    <p class="info">Specify an image. It can be on this site already ("Internal Image") or an image you upload ("Upload").</p>
     <% } %>
 
     <div class="linkTypes pat-autotoc autotabs"
          data-pat-autotoc="section:fieldset;levels:legend;IDPrefix:tinymce-autotoc-">
 
-        <% if(_.contains(linkTypes, 'image')){ %>
+      <% if(_.contains(linkTypes, 'uploadImage')){ %>
+      <fieldset class="linkType uploadImage" data-linkType="uploadImage">
+        <legend id="tinylink-uploadImage">Upload</legend>
+        <div class="uploadify-me"></div>
+      </fieldset>
+      <% } %>
+
+      <% if(_.contains(linkTypes, 'image')){ %>
       <fieldset class="linkType image" data-linkType="image">
         <legend id="tinylink-image">Internal Image</legend>
         <div class="form-inline">
@@ -27,13 +34,6 @@
             </select>
           </div>
         </div>
-      </fieldset>
-        <% } %>
-
-      <% if(_.contains(linkTypes, 'uploadImage')){ %>
-      <fieldset class="linkType uploadImage" data-linkType="uploadImage">
-        <legend id="tinylink-uploadImage">Upload</legend>
-        <div class="uploadify-me"></div>
       </fieldset>
       <% } %>
 

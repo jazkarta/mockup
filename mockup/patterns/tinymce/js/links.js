@@ -64,14 +64,16 @@ define([
       this.getEl().on('change', function(){
         // check here if we should automatically add in http:// to url
         var val = $(this).val();
-        if((new RegExp("https?\:\/\/")).test(val)){
-          // already valid url
-          return;
+        if(!(new RegExp("https?\:\/\/")).test(val)){
+          var domain = $(this).val().split('/')[0];
+          if(domain.indexOf('.') !== -1){
+            val = 'http://' + val;
+          }
         }
-        var domain = $(this).val().split('/')[0];
-        if(domain.indexOf('.') !== -1){
-          $(this).val('http://' + val);
-        }
+        // use backend to convert to resolveuid URL when link is internal
+        $.get(portal_url + '/@@make-resolveuid-url', {url: val}, function (data) {
+          $(this).val(data);
+        }.bind(this));
       });
     }
   });
@@ -641,6 +643,14 @@ define([
         e.stopPropagation();
         self.linkType = self.modal.$modal.find('fieldset.active').data('linktype');
 
+        if(self.linkType === 'external') {
+          // use backend to convert to resolveuid URL when link is internal
+          $.get(portal_url + '/@@make-resolveuid-url', {url: self.getLinkUrl()}, function (href) {
+            self.updateAnchor(href);
+            self.hide();
+          });
+          return;
+        }
         if(self.linkType === 'uploadImage' || self.linkType === 'upload'){
           var patUpload = self.$upload.data().patternUpload;
           if(patUpload.dropzone.files.length > 0){
@@ -762,6 +772,11 @@ define([
           }else if (src) {
             self.guessImageLink(src);
           }
+          if (self.linkType !== 'externalImage') {
+            // hide external image unless it's in use
+            $('.autotoc-level-1:last', self.modal.$modal).hide();
+            $('fieldset.externalImage', self.modal.$modal).hide();
+          }
           var className = self.dom.getAttrib(self.imgElm, 'class');
           var klasses = className.split(' ');
           for (var i = 0; i < klasses.length; i = i + 1) {
@@ -795,6 +810,11 @@ define([
         this.linkType = 'image';
         this.$scale.val(this.tinypattern.getScaleFromUrl(src));
         this.linkTypes.image.set(this.tinypattern.stripGeneratedUrl(src));
+      } else if (src.match(/^resolveuid\/[^\/]+$/)) {
+        var uid = src.split('/')[1];
+        this.linkType = 'image';
+        this.$scale.val('');
+        this.linkTypes.image.set(uid);
       } else {
         this.linkType = 'externalImage';
         this.linkTypes.externalImage.set(src);
