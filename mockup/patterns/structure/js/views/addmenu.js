@@ -49,52 +49,7 @@ define([
       var self = this;
       e.preventDefault();
       self.app.loading.show();
-
-      $.ajax({
-        url: button.url,
-        type: 'POST',
-        data: {
-          '_authenticator': $('[name="_authenticator"]').val(),
-        },
-        success: function(response) {
-          self.app.loading.hide();
-          var modal = new Modal(self.$el, {
-            html: utils.parseBodyTag(response),
-            content: '#content',
-            width: '80%',
-            backdropOptions: {
-              closeOnClick: false
-            },
-            automaticallyAddButtonActions: false,
-            actionOptions: {
-              displayInModal: false,
-              reloadWindowOnClose: false
-            },
-            actions: {
-              'input#form-buttons-save, .formControls input[name="form.button.save"]': {
-                onSuccess: function(modal, response, state, xhr, form) {
-                  self.app.collection.pager();
-                  if (self.$items.is(':visible')) {
-                    self.$dropdown.dropdown('toggle');
-                  }
-                  modal.hide();
-                },
-                onError: function() {
-                  alert('error on form');
-                }
-              },
-              'input#form-buttons-cancel, .formControls input[name="form.button.cancel"]': {
-                modalFunction: 'hide'
-              }
-            },
-          });
-          modal.show();
-        },
-        error: function() {
-          // XXX handle error
-          self.app.loading.hide();
-        }
-      });
+      window.location = button.url;
     },
     render: function() {
       var self = this;
