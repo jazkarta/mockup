@@ -54,6 +54,10 @@ define([
       return this;
     },
     itemClicked: function(e) {
+      if (e.shiftKey || e.metaKey) {
+        e.stopImmediatePropagation();
+        return true;
+      }
       e.preventDefault();
       /* check if this should just be opened in new window */
       var keyEvent = this.app.keyEvent;
