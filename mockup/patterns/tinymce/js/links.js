@@ -71,7 +71,8 @@ define([
           }
         }
         // use backend to convert to resolveuid URL when link is internal
-        $.get(portal_url + '/@@make-resolveuid-url', {url: val}, function (data) {
+        var base_url = window.PORTAL_URL || $('body').data('portal-url');
+        $.get(base_url + '/@@make-resolveuid-url', {url: val}, function (data) {
           $(this).val(data);
         }.bind(this));
       });
@@ -645,7 +646,8 @@ define([
 
         if(self.linkType === 'external') {
           // use backend to convert to resolveuid URL when link is internal
-          $.get(portal_url + '/@@make-resolveuid-url', {url: self.getLinkUrl()}, function (href) {
+          var base_url = window.PORTAL_URL || $('body').data('portal-url');
+          $.get(base_url + '/@@make-resolveuid-url', {url: self.getLinkUrl()}, function (href) {
             self.updateAnchor(href);
             self.hide();
           });
