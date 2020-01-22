@@ -183,6 +183,7 @@ define([
                  'alignleft aligncenter alignright alignjustify | ' +
                  'bullist numlist outdent indent | ' +
                  'unlink plonelink ploneimage',
+        relative_urls : false,
         //'autoresize_max_height': 900,
         'height': 400
       },
