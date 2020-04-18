@@ -147,15 +147,19 @@ define([
         ajaxUrl: null, // string, or function($el, options) that returns a string
         modalFunction: null, // String, function name on self to call
         isForm: false,
-        timeout: 5000,
+        timeout: 15000,
         displayInModal: true,
         reloadWindowOnClose: true,
         error: '.portalMessage.error',
         formFieldError: '.field.error',
         onSuccess: null,
-        onError: null,
+        onError: function() {
+          window.alert('An error occurred.');
+        },
         onFormError: null,
-        onTimeout: null,
+        onTimeout: function() {
+          window.alert('Timed out waiting for server.');
+        },
         redirectOnResponse: false,
         redirectToUrl: function($action, response, options) {
           var reg;
@@ -254,6 +258,10 @@ define([
           $form.trigger('submit');
           return;
         }
+
+        // Disable button
+        $action.prop('disabled', true);
+
         // We want to trigger the form submit event but NOT use the default
         $form.on('submit', function(e) {
           e.preventDefault();
@@ -266,6 +274,7 @@ define([
           data: extraData,
           url: url,
           error: function(xhr, textStatus, errorStatus) {
+            $action.prop('disabled', false);
             self.loading.hide();
             if (textStatus === 'timeout' && options.onTimeout) {
               options.onTimeout.apply(self, xhr, errorStatus);
@@ -478,11 +487,13 @@ define([
             e.preventDefault();
             self.positionModal();
           })
+          .on('click', function(e) {
+            e.stopPropagation();
+          })
           .appendTo(self.$wrapperInner);
 
         if (self.options.loadLinksWithinModal) {
           self.$modal.on('click', function(e) {
-            e.stopPropagation();
             if ($.nodeName(e.target, 'a')) {
               e.preventDefault();
               // TODO: open links inside modal
@@ -557,6 +568,28 @@ define([
           self.show();
         });
       }
+
+      if (self.$el.is('input[type="submit"]')) {
+        self.$el.on('click', function(e) {
+          e.stopPropagation();
+          e.preventDefault();
+          self.backdrop = self.createBackdrop();
+          self.loading.show();
+          var actionOptions = $.extend({}, self.actionOptions, {
+            displayInModal: true,
+            onSuccess: function() {
+              self.loading.hide();
+              self.$raw = $('<div></div>');
+              self._show();
+            }
+          });
+          var options = $.extend({}, self.options, {
+            backdropOptions: {closeOnClick: false}
+          });
+          self.options.handleFormAction.apply(self, [self.$el, actionOptions, options]);
+        });
+      }
+
       self.initModal();
     },
 
