@@ -157,6 +157,18 @@ define([
               this.validate_formlib_field(ev.target);
             }
           }, this));
+
+      // Special handling for related items pattern
+      this.$el.find('input.pat-relateditems.text-widget').on('change',
+        $.proxy(function (ev) {
+          if (this.options.type === 'archetypes') {
+            this.validate_archetypes_field(ev.target);
+          } else if (this.options.type === 'z3c.form') {
+            this.validate_z3cform_field(ev.target);
+          } else if (this.options.type === 'formlib') {
+            this.validate_formlib_field(ev.target);
+          }
+        }, this));
       },
   });
   return InlineValidation;
