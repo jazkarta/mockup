@@ -140,36 +140,30 @@ define([
     },
 
     init: function () {
-
+      var self = this;
+      var validate_field = $.proxy(function (ev) {
+        if (self.options.type === 'archetypes') {
+          self.validate_archetypes_field(ev.target);
+        } else if (self.options.type === 'z3c.form') {
+          self.validate_z3cform_field(ev.target);
+        } else if (self.options.type === 'formlib') {
+          self.validate_formlib_field(ev.target);
+        }
+      });
       this.$el.find(
           'input[type="text"], ' +
           'input[type="password"], ' +
           'input[type="checkbox"], ' +
           'select, ' +
-          'textarea').on('blur',
-
-          $.proxy(function (ev) {
-            if (this.options.type === 'archetypes') {
-              this.validate_archetypes_field(ev.target);
-            } else if (this.options.type === 'z3c.form') {
-              this.validate_z3cform_field(ev.target);
-            } else if (this.options.type === 'formlib') {
-              this.validate_formlib_field(ev.target);
-            }
-          }, this));
+          'textarea').on('blur', function (ev) {
+            setTimeout(function () {
+              validate_field(ev);
+            }, 200);
+          });
 
       // Special handling for related items pattern
-      this.$el.find('input.pat-relateditems.text-widget').on('change',
-        $.proxy(function (ev) {
-          if (this.options.type === 'archetypes') {
-            this.validate_archetypes_field(ev.target);
-          } else if (this.options.type === 'z3c.form') {
-            this.validate_z3cform_field(ev.target);
-          } else if (this.options.type === 'formlib') {
-            this.validate_formlib_field(ev.target);
-          }
-        }, this));
-      },
+      this.$el.find('input.pat-relateditems.text-widget').on('change', validate_field);
+    },
   });
   return InlineValidation;
 });
