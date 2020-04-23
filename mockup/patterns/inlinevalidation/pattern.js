@@ -122,7 +122,8 @@ define([
             fset = $input.closest('fieldset').attr('data-fieldset'),
             fname = $field.attr('data-fieldname');
 
-        if (fname) {
+        // Don't validate if the form has buttons pressed
+        if (fname && $form.formSerialize().indexOf('form.buttons.') == -1) {
           this.queue($.proxy(function(next) {
               $form.ajaxSubmit({
                   url: this.append_url_path($form.attr('action'), '@@z3cform_validate_field'),
@@ -151,18 +152,21 @@ define([
         }
       });
       this.$el.find(
-          'input[type="text"], ' +
+          'input[type="text"]:not(.pattern-pickadate-date, .pattern-pickadate-time), ' +
           'input[type="password"], ' +
           'input[type="checkbox"], ' +
           'select, ' +
-          'textarea').on('blur', function (ev) {
-            setTimeout(function () {
-              validate_field(ev);
-            }, 200);
-          });
+          'textarea').on('blur', validate_field);
 
-      // Special handling for related items pattern
+      // Special handling for related items
       this.$el.find('input.pat-relateditems.text-widget').on('change', validate_field);
+
+      // Special handling for date patterns
+      this.$el.find(
+        'input.pattern-pickadate-date, ' +
+        'input.pattern-pickadate-time').on('change', function (ev) {
+          setTimeout(function () {validate_field(ev);}, 200);
+        });
     },
   });
   return InlineValidation;
