@@ -127,7 +127,7 @@ define([
       return {
         url: self.options.vocabularyUrl,
         dataType: 'JSON',
-        quietMillis: 100,
+        quietMillis: 350,
         data: function(term, page) {
           return self.getQueryData(term, page);
         },

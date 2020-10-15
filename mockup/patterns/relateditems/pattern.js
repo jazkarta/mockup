@@ -375,7 +375,7 @@ define([
         })
       );
 
-      self.options.ajax = self.options.setupAjax.apply(self);
+      self.options.ajax = $.extend(self.options.setupAjax.apply(self), self.options.ajax || {});
 
       self.$el.wrap('<div class="pattern-relateditems-container" />');
       self.$container = self.$el.parents('.pattern-relateditems-container');
