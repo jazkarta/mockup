@@ -371,7 +371,9 @@ define([
             i: 'is_folderish',
             o: 'plone.app.querystring.operation.selection.any',
             v: 'True'
-          }]
+          }],
+          sort_on: 'getObjPositionInParent',
+          sort_order: 'ascending'
         })
       );
 
