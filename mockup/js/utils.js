@@ -89,6 +89,7 @@ define([
         criterias = self.options.baseCriteria.slice(0);
       }
       if (term && term[0] == '/') {
+        term = term.split('/@@')[0];
         criterias.push({
           i: 'path',
           o: 'plone.app.querystring.operation.string.path',
@@ -111,7 +112,7 @@ define([
           v: term
         });
       }
-      if (!(term &&term[0] == '/')) {
+      if (!(term && term[0] == '/')) {
         if(options.searchPath){
           criterias.push({
             i: 'path',
