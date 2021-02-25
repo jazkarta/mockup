@@ -415,6 +415,9 @@ define([
          * but this fixes overlays not saving data */
         var $form = self.$el.parents('form');
         $form.on('submit', function() {
+          if (self.tiny === undefined) {
+            return;
+          }
           if (self.options.inline === true) {
             // save back from contenteditable to textarea
             self.$el.val(self.tiny.getContent());
